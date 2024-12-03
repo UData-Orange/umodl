@@ -2,18 +2,20 @@
 // This software is distributed under the BSD 3-Clause-clear License, the text of which is available
 // at https://spdx.org/licenses/BSD-3-Clause-Clear.html or see the "LICENSE" file for more details.
 
+#pragma once
+
 #include "KWDiscretizerMODL.h"
 
 //////////////////////////////////////////////////////////////////////////////////
 // Algorithme MODL de fusion des lignes adjacentes d'une table de contingence
 // Optimisation des discretisation pour l'a priori a trois etages
 // Prise en compte de l'effectif minimum par intervalle dans le critere
-class KWDiscretizerUMODL : public KWDiscretizerMODLFamily
+class UPDiscretizerUMODL : public KWDiscretizerMODLFamily
 {
 public:
 	// Constructeur
-	KWDiscretizerUMODL();
-	~KWDiscretizerUMODL();
+	UPDiscretizerUMODL();
+	~UPDiscretizerUMODL();
 
 	// Nom de l'algorithme
 	const ALString GetName() const override;
@@ -441,12 +443,12 @@ protected:
 	// d'une discretisation
 
 	// Statistiques sur les optimisation effectuees
-	mutable int nMergeNumber;
-	mutable int nExtraMergeNumber;
-	mutable int nSplitNumber;
-	mutable int nExtraSplitNumber;
-	mutable int nMergeSplitNumber;
-	mutable int nMergeMergeSplitNumber;
+	mutable int nMergeNumber = 0;
+	mutable int nExtraMergeNumber = 0;
+	mutable int nSplitNumber = 0;
+	mutable int nExtraSplitNumber = 0;
+	mutable int nMergeSplitNumber = 0;
+	mutable int nMergeMergeSplitNumber = 0;
 
 	// Cout pour favoriser les optimisations tendant a reduire la contrainte
 	// d'effectif minimum, et les rendre prioritaire
@@ -459,7 +461,7 @@ protected:
 	static const double dEpsilon;
 
 	// Couts de partitionnement pour la discretisation
-	KWUnivariatePartitionCosts* discretizationCosts;
+	KWUnivariatePartitionCosts* discretizationCosts = nullptr;
 };
 
 // Comparaison de deux objets KWMODLLineOptimization sur la variation de cout de Merge
@@ -477,37 +479,37 @@ int KWMODLLineDeepOptimizationCompareMergeMergeSplitDeltaCost(const void* elem1,
 ///////////////////////////////////////////////////////////////////////
 // Methodes en inline
 
-inline const KWFrequencyVector* KWDiscretizerUMODL::GetFrequencyVectorCreator() const
+inline const KWFrequencyVector* UPDiscretizerUMODL::GetFrequencyVectorCreator() const
 {
 	return discretizationCosts->GetFrequencyVectorCreator();
 }
 
-inline double KWDiscretizerUMODL::ComputePartitionCost(int nIntervalNumber) const
+inline double UPDiscretizerUMODL::ComputePartitionCost(int nIntervalNumber) const
 {
 	return discretizationCosts->ComputePartitionCost(nIntervalNumber);
 }
 
-inline double KWDiscretizerUMODL::ComputePartitionDeltaCost(int nIntervalNumber) const
+inline double UPDiscretizerUMODL::ComputePartitionDeltaCost(int nIntervalNumber) const
 {
 	return discretizationCosts->ComputePartitionDeltaCost(nIntervalNumber);
 }
 
-inline double KWDiscretizerUMODL::ComputePartitionCost(int nIntervalNumber, int nGarbageModalityNumber) const
+inline double UPDiscretizerUMODL::ComputePartitionCost(int nIntervalNumber, int nGarbageModalityNumber) const
 {
 	return discretizationCosts->ComputePartitionCost(nIntervalNumber, nGarbageModalityNumber);
 }
 
-inline double KWDiscretizerUMODL::ComputePartitionDeltaCost(int nIntervalNumber, int nGarbageModalityNumber) const
+inline double UPDiscretizerUMODL::ComputePartitionDeltaCost(int nIntervalNumber, int nGarbageModalityNumber) const
 {
 	return discretizationCosts->ComputePartitionDeltaCost(nIntervalNumber, nGarbageModalityNumber);
 }
 
-inline double KWDiscretizerUMODL::ComputeIntervalCost(const KWFrequencyVector* intervalFrequencyVector) const
+inline double UPDiscretizerUMODL::ComputeIntervalCost(const KWFrequencyVector* intervalFrequencyVector) const
 {
 	return discretizationCosts->ComputePartCost(intervalFrequencyVector);
 }
 
-inline double KWDiscretizerUMODL::ComputePartitionGlobalCost(const KWFrequencyTable* partTable) const
+inline double UPDiscretizerUMODL::ComputePartitionGlobalCost(const KWFrequencyTable* partTable) const
 {
 	return discretizationCosts->ComputePartitionGlobalCost(partTable);
 }
