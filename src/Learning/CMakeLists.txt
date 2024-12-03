@@ -18,6 +18,7 @@ add_subdirectory(KWUtils)
 add_subdirectory(MHHistograms)
 add_subdirectory(MODL)
 add_subdirectory(MODL_Coclustering)
+add_subdirectory(UPDataPreparation)
 add_subdirectory(SNBPredictor)
 add_subdirectory(samples/sample3)
 

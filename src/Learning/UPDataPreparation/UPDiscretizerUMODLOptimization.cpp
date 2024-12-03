@@ -2,12 +2,12 @@
 // This software is distributed under the BSD 3-Clause-clear License, the text of which is available
 // at https://spdx.org/licenses/BSD-3-Clause-Clear.html or see the "LICENSE" file for more details.
 
-#include "KWDiscretizerUMODL.h"
+#include "UPDiscretizerUMODL.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////
 // Optimisation basee sur des Merges
 
-void KWDiscretizerUMODL::IntervalListMergeOptimization(KWMODLLineOptimization*& headInterval) const
+void UPDiscretizerUMODL::IntervalListMergeOptimization(KWMODLLineOptimization*& headInterval) const
 {
 	const boolean bTrace = false;
 	SortedList mergeList(KWMODLLineOptimizationCompareMergeDeltaCost);
@@ -67,7 +67,7 @@ void KWDiscretizerUMODL::IntervalListMergeOptimization(KWMODLLineOptimization*& 
 	}
 }
 
-void KWDiscretizerUMODL::ComputeIntervalMerge(KWMODLLineOptimization* interval) const
+void UPDiscretizerUMODL::ComputeIntervalMerge(KWMODLLineOptimization* interval) const
 {
 	require(interval != NULL);
 	require(interval->GetPrev() != NULL);
@@ -99,7 +99,7 @@ void KWDiscretizerUMODL::ComputeIntervalMerge(KWMODLLineOptimization* interval) 
 	}
 }
 
-void KWDiscretizerUMODL::InitializeMergeList(KWMODLLineOptimization* headInterval) const
+void UPDiscretizerUMODL::InitializeMergeList(KWMODLLineOptimization* headInterval) const
 {
 	KWMODLLineOptimization* interval;
 
@@ -116,7 +116,7 @@ void KWDiscretizerUMODL::InitializeMergeList(KWMODLLineOptimization* headInterva
 	}
 }
 
-void KWDiscretizerUMODL::InitializeMergeSortedList(SortedList* mergeList, KWMODLLineOptimization* headInterval) const
+void UPDiscretizerUMODL::InitializeMergeSortedList(SortedList* mergeList, KWMODLLineOptimization* headInterval) const
 {
 	KWMODLLineOptimization* interval;
 
@@ -136,7 +136,7 @@ void KWDiscretizerUMODL::InitializeMergeSortedList(SortedList* mergeList, KWMODL
 	}
 }
 
-void KWDiscretizerUMODL::UpdateMergeSortedList(SortedList* mergeList, KWMODLLineOptimization*& headInterval,
+void UPDiscretizerUMODL::UpdateMergeSortedList(SortedList* mergeList, KWMODLLineOptimization*& headInterval,
 					       KWMODLLineOptimization* interval) const
 {
 	KWMODLLineOptimization* prevInterval;
@@ -213,7 +213,7 @@ void KWDiscretizerUMODL::UpdateMergeSortedList(SortedList* mergeList, KWMODLLine
 ///////////////////////////////////////////////////////////////////////////////////////
 // Optimisation basee sur des Splits
 
-void KWDiscretizerUMODL::IntervalListSplitOptimization(const KWFrequencyTable* kwftSource,
+void UPDiscretizerUMODL::IntervalListSplitOptimization(const KWFrequencyTable* kwftSource,
 						       KWMODLLineDeepOptimization*& headInterval) const
 {
 	SortedList splitList(KWMODLLineDeepOptimizationCompareSplitDeltaCost);
@@ -268,7 +268,7 @@ void KWDiscretizerUMODL::IntervalListSplitOptimization(const KWFrequencyTable* k
 	}
 }
 
-void KWDiscretizerUMODL::ComputeIntervalSplit(const KWFrequencyTable* kwftSource,
+void UPDiscretizerUMODL::ComputeIntervalSplit(const KWFrequencyTable* kwftSource,
 					      KWMODLLineDeepOptimization* interval) const
 {
 	int nFirstIndex;
@@ -296,7 +296,7 @@ void KWDiscretizerUMODL::ComputeIntervalSplit(const KWFrequencyTable* kwftSource
 		ComputeBestSplit(kwftSource, nFirstIndex, nLastIndex, interval->GetCost(), interval->GetSplit());
 }
 
-void KWDiscretizerUMODL::InitializeSplitList(const KWFrequencyTable* kwftSource,
+void UPDiscretizerUMODL::InitializeSplitList(const KWFrequencyTable* kwftSource,
 					     KWMODLLineDeepOptimization* headInterval) const
 {
 	const boolean bTrace = false;
@@ -327,7 +327,7 @@ void KWDiscretizerUMODL::InitializeSplitList(const KWFrequencyTable* kwftSource,
 	}
 }
 
-void KWDiscretizerUMODL::InitializeSplitSortedList(SortedList* splitList,
+void UPDiscretizerUMODL::InitializeSplitSortedList(SortedList* splitList,
 						   KWMODLLineDeepOptimization* headInterval) const
 {
 	KWMODLLineDeepOptimization* interval;
@@ -348,7 +348,7 @@ void KWDiscretizerUMODL::InitializeSplitSortedList(SortedList* splitList,
 	}
 }
 
-void KWDiscretizerUMODL::UpdateSplitSortedList(const KWFrequencyTable* kwftSource, SortedList* splitList,
+void UPDiscretizerUMODL::UpdateSplitSortedList(const KWFrequencyTable* kwftSource, SortedList* splitList,
 					       KWMODLLineDeepOptimization*& headInterval,
 					       KWMODLLineDeepOptimization* interval) const
 {
@@ -394,7 +394,7 @@ void KWDiscretizerUMODL::UpdateSplitSortedList(const KWFrequencyTable* kwftSourc
 ///////////////////////////////////////////////////////////////////////////////////////
 // Optimisation basee sur des MergeSplits
 
-void KWDiscretizerUMODL::IntervalListMergeSplitOptimization(const KWFrequencyTable* kwftSource,
+void UPDiscretizerUMODL::IntervalListMergeSplitOptimization(const KWFrequencyTable* kwftSource,
 							    KWMODLLineDeepOptimization*& headInterval) const
 {
 	SortedList mergeSplitList(KWMODLLineDeepOptimizationCompareMergeSplitDeltaCost);
@@ -436,7 +436,7 @@ void KWDiscretizerUMODL::IntervalListMergeSplitOptimization(const KWFrequencyTab
 	}
 }
 
-void KWDiscretizerUMODL::ComputeIntervalMergeSplit(const KWFrequencyTable* kwftSource,
+void UPDiscretizerUMODL::ComputeIntervalMergeSplit(const KWFrequencyTable* kwftSource,
 						   KWMODLLineDeepOptimization* interval) const
 {
 	int nFirstIndex;
@@ -469,7 +469,7 @@ void KWDiscretizerUMODL::ComputeIntervalMergeSplit(const KWFrequencyTable* kwftS
 				 interval->GetCost() + interval->GetPrev()->GetCost(), interval->GetMergeSplit());
 }
 
-void KWDiscretizerUMODL::InitializeMergeSplitList(const KWFrequencyTable* kwftSource,
+void UPDiscretizerUMODL::InitializeMergeSplitList(const KWFrequencyTable* kwftSource,
 						  KWMODLLineDeepOptimization* headInterval) const
 {
 	const boolean bTrace = false;
@@ -502,7 +502,7 @@ void KWDiscretizerUMODL::InitializeMergeSplitList(const KWFrequencyTable* kwftSo
 	}
 }
 
-void KWDiscretizerUMODL::InitializeMergeSplitSortedList(SortedList* mergeSplitList,
+void UPDiscretizerUMODL::InitializeMergeSplitSortedList(SortedList* mergeSplitList,
 							KWMODLLineDeepOptimization* headInterval) const
 {
 	KWMODLLineDeepOptimization* interval;
@@ -524,7 +524,7 @@ void KWDiscretizerUMODL::InitializeMergeSplitSortedList(SortedList* mergeSplitLi
 	}
 }
 
-void KWDiscretizerUMODL::UpdateMergeSplitSortedList(const KWFrequencyTable* kwftSource, SortedList* mergeSplitList,
+void UPDiscretizerUMODL::UpdateMergeSplitSortedList(const KWFrequencyTable* kwftSource, SortedList* mergeSplitList,
 						    KWMODLLineDeepOptimization*& headInterval,
 						    KWMODLLineDeepOptimization* interval) const
 {
@@ -587,7 +587,7 @@ void KWDiscretizerUMODL::UpdateMergeSplitSortedList(const KWFrequencyTable* kwft
 ///////////////////////////////////////////////////////////////////////////////////////
 // Optimisation basee sur des MergeMergeSplits
 
-void KWDiscretizerUMODL::IntervalListMergeMergeSplitOptimization(const KWFrequencyTable* kwftSource,
+void UPDiscretizerUMODL::IntervalListMergeMergeSplitOptimization(const KWFrequencyTable* kwftSource,
 								 KWMODLLineDeepOptimization*& headInterval) const
 {
 	SortedList mergeMergeSplitList(KWMODLLineDeepOptimizationCompareMergeMergeSplitDeltaCost);
@@ -644,7 +644,7 @@ void KWDiscretizerUMODL::IntervalListMergeMergeSplitOptimization(const KWFrequen
 	}
 }
 
-void KWDiscretizerUMODL::ComputeIntervalMergeMergeSplit(const KWFrequencyTable* kwftSource,
+void UPDiscretizerUMODL::ComputeIntervalMergeMergeSplit(const KWFrequencyTable* kwftSource,
 							KWMODLLineDeepOptimization* interval) const
 {
 	KWMODLLineDeepOptimization* prevInterval;
@@ -687,7 +687,7 @@ void KWDiscretizerUMODL::ComputeIntervalMergeMergeSplit(const KWFrequencyTable* 
 			 interval->GetMergeMergeSplit());
 }
 
-void KWDiscretizerUMODL::InitializeMergeMergeSplitList(const KWFrequencyTable* kwftSource,
+void UPDiscretizerUMODL::InitializeMergeMergeSplitList(const KWFrequencyTable* kwftSource,
 						       KWMODLLineDeepOptimization* headInterval) const
 {
 	const boolean bTrace = false;
@@ -725,7 +725,7 @@ void KWDiscretizerUMODL::InitializeMergeMergeSplitList(const KWFrequencyTable* k
 	}
 }
 
-void KWDiscretizerUMODL::InitializeMergeMergeSplitSortedList(SortedList* mergeMergeSplitList,
+void UPDiscretizerUMODL::InitializeMergeMergeSplitSortedList(SortedList* mergeMergeSplitList,
 							     KWMODLLineDeepOptimization* headInterval) const
 {
 	KWMODLLineDeepOptimization* interval;
@@ -749,7 +749,7 @@ void KWDiscretizerUMODL::InitializeMergeMergeSplitSortedList(SortedList* mergeMe
 	}
 }
 
-void KWDiscretizerUMODL::UpdateMergeMergeSplitSortedList(const KWFrequencyTable* kwftSource,
+void UPDiscretizerUMODL::UpdateMergeMergeSplitSortedList(const KWFrequencyTable* kwftSource,
 							 SortedList* mergeMergeSplitList,
 							 KWMODLLineDeepOptimization*& headInterval,
 							 KWMODLLineDeepOptimization* interval) const
@@ -846,7 +846,7 @@ void KWDiscretizerUMODL::UpdateMergeMergeSplitSortedList(const KWFrequencyTable*
 //////////////////////////////////////////////////////////////////
 // Recherche d'une discretisation optimale
 
-KWMODLLine* KWDiscretizerUMODL::ComputeOptimalDiscretization(const KWFrequencyTable* kwftSource) const
+KWMODLLine* UPDiscretizerUMODL::ComputeOptimalDiscretization(const KWFrequencyTable* kwftSource) const
 {
 	KWMODLLine lineCreator(GetFrequencyVectorCreator());
 	KWMODLLineOptimalDiscretization* headLineOptimalDiscretization;
@@ -910,7 +910,7 @@ KWMODLLine* KWDiscretizerUMODL::ComputeOptimalDiscretization(const KWFrequencyTa
 }
 
 KWMODLLineOptimalDiscretization*
-KWDiscretizerUMODL::InitializeOptimalDiscretizations(const KWFrequencyTable* kwftSource) const
+UPDiscretizerUMODL::InitializeOptimalDiscretizations(const KWFrequencyTable* kwftSource) const
 {
 	KWMODLLine lineCreator(GetFrequencyVectorCreator());
 	KWMODLLineOptimalDiscretization lineOptimalDiscretizationCreator(GetFrequencyVectorCreator());
@@ -986,7 +986,7 @@ KWDiscretizerUMODL::InitializeOptimalDiscretizations(const KWFrequencyTable* kwf
 	return headInterval;
 }
 
-boolean KWDiscretizerUMODL::UpdateOptimalDiscretizations(const KWFrequencyTable* kwftSource,
+boolean UPDiscretizerUMODL::UpdateOptimalDiscretizations(const KWFrequencyTable* kwftSource,
 							 KWMODLLineOptimalDiscretization* headInterval) const
 {
 	boolean bNewInterval;
@@ -1093,7 +1093,7 @@ boolean KWDiscretizerUMODL::UpdateOptimalDiscretizations(const KWFrequencyTable*
 ///////////////////////////////////////////////////////////////////////////////////////
 // Methodes diverses
 
-void KWDiscretizerUMODL::ComputeBestSplit(const KWFrequencyTable* kwftSource, int nFirstIndex, int nLastIndex,
+void UPDiscretizerUMODL::ComputeBestSplit(const KWFrequencyTable* kwftSource, int nFirstIndex, int nLastIndex,
 					  double dInitialCost, KWMODLLineSplit* lineSplit) const
 {
 	KWFrequencyVector* kwfvFirstSubLineFrequencyVector;
@@ -1265,7 +1265,7 @@ void KWDiscretizerUMODL::ComputeBestSplit(const KWFrequencyTable* kwftSource, in
 	       lineSplit->GetFirstSubLineFrequencyVector()->ComputeTotalFrequency());
 }
 
-void KWDiscretizerUMODL::InitializeWorkingData(const KWFrequencyTable* kwftSource) const
+void UPDiscretizerUMODL::InitializeWorkingData(const KWFrequencyTable* kwftSource) const
 {
 	const boolean bTrace = false;
 	int nPartileNumber;
@@ -1295,7 +1295,7 @@ void KWDiscretizerUMODL::InitializeWorkingData(const KWFrequencyTable* kwftSourc
 		     << discretizationCosts->GetValueNumber() << endl;
 }
 
-void KWDiscretizerUMODL::CleanWorkingData() const
+void UPDiscretizerUMODL::CleanWorkingData() const
 {
 	// Parametrage de la structure de cout
 	discretizationCosts->SetValueNumber(0);
@@ -1304,7 +1304,7 @@ void KWDiscretizerUMODL::CleanWorkingData() const
 	discretizationCosts->SetTotalInstanceNumber(0);
 }
 
-void KWDiscretizerUMODL::InitializeFrequencyVector(KWFrequencyVector* kwfvFrequencyVector) const
+void UPDiscretizerUMODL::InitializeFrequencyVector(KWFrequencyVector* kwfvFrequencyVector) const
 {
 	IntVector* ivFrequencyVector;
 
@@ -1315,7 +1315,7 @@ void KWDiscretizerUMODL::InitializeFrequencyVector(KWFrequencyVector* kwfvFreque
 	ivFrequencyVector->SetSize(discretizationCosts->GetClassValueNumber());
 }
 
-boolean KWDiscretizerUMODL::CheckFrequencyVector(const KWFrequencyVector* kwfvFrequencyVector) const
+boolean UPDiscretizerUMODL::CheckFrequencyVector(const KWFrequencyVector* kwfvFrequencyVector) const
 {
 	boolean bOk;
 	IntVector* ivFrequencyVector;
@@ -1343,7 +1343,7 @@ boolean KWDiscretizerUMODL::CheckFrequencyVector(const KWFrequencyVector* kwfvFr
 	return bOk;
 }
 
-void KWDiscretizerUMODL::AddFrequencyVector(KWFrequencyVector* kwfvSourceFrequencyVector,
+void UPDiscretizerUMODL::AddFrequencyVector(KWFrequencyVector* kwfvSourceFrequencyVector,
 					    const KWFrequencyVector* kwfvAddedFrequencyVector) const
 {
 	IntVector* ivSourceFrequencyVector;
@@ -1371,7 +1371,7 @@ void KWDiscretizerUMODL::AddFrequencyVector(KWFrequencyVector* kwfvSourceFrequen
 	ensure(CheckFrequencyVector(kwfvSourceFrequencyVector));
 }
 
-void KWDiscretizerUMODL::RemoveFrequencyVector(KWFrequencyVector* kwfvSourceFrequencyVector,
+void UPDiscretizerUMODL::RemoveFrequencyVector(KWFrequencyVector* kwfvSourceFrequencyVector,
 					       const KWFrequencyVector* kwfvRemovedFrequencyVector) const
 {
 	IntVector* ivSourceFrequencyVector;
@@ -1399,7 +1399,7 @@ void KWDiscretizerUMODL::RemoveFrequencyVector(KWFrequencyVector* kwfvSourceFreq
 	ensure(CheckFrequencyVector(kwfvSourceFrequencyVector));
 }
 
-void KWDiscretizerUMODL::MergeTwoFrequencyVectors(KWFrequencyVector* kwfvSourceFrequencyVector,
+void UPDiscretizerUMODL::MergeTwoFrequencyVectors(KWFrequencyVector* kwfvSourceFrequencyVector,
 						  const KWFrequencyVector* kwfvMergedFrequencyVector1,
 						  const KWFrequencyVector* kwfvMergedFrequencyVector2) const
 {
@@ -1434,7 +1434,7 @@ void KWDiscretizerUMODL::MergeTwoFrequencyVectors(KWFrequencyVector* kwfvSourceF
 	ensure(CheckFrequencyVector(kwfvSourceFrequencyVector));
 }
 
-void KWDiscretizerUMODL::MergeThreeFrequencyVectors(KWFrequencyVector* kwfvSourceFrequencyVector,
+void UPDiscretizerUMODL::MergeThreeFrequencyVectors(KWFrequencyVector* kwfvSourceFrequencyVector,
 						    const KWFrequencyVector* kwfvMergedFrequencyVector1,
 						    const KWFrequencyVector* kwfvMergedFrequencyVector2,
 						    const KWFrequencyVector* kwfvMergedFrequencyVector3) const
@@ -1475,7 +1475,7 @@ void KWDiscretizerUMODL::MergeThreeFrequencyVectors(KWFrequencyVector* kwfvSourc
 	ensure(CheckFrequencyVector(kwfvSourceFrequencyVector));
 }
 
-void KWDiscretizerUMODL::SplitFrequencyVector(KWFrequencyVector* kwfvSourceFrequencyVector,
+void UPDiscretizerUMODL::SplitFrequencyVector(KWFrequencyVector* kwfvSourceFrequencyVector,
 					      KWFrequencyVector* kwfvNewFrequencyVector,
 					      const KWFrequencyVector* kwfvFirstSubFrequencyVectorSpec) const
 {
@@ -1515,7 +1515,7 @@ void KWDiscretizerUMODL::SplitFrequencyVector(KWFrequencyVector* kwfvSourceFrequ
 	ensure(CheckFrequencyVector(kwfvNewFrequencyVector));
 }
 
-void KWDiscretizerUMODL::MergeSplitFrequencyVectors(KWFrequencyVector* kwfvSourceFrequencyVector1,
+void UPDiscretizerUMODL::MergeSplitFrequencyVectors(KWFrequencyVector* kwfvSourceFrequencyVector1,
 						    KWFrequencyVector* kwfvSourceFrequencyVector2,
 						    const KWFrequencyVector* kwfvFirstSubFrequencyVectorSpec) const
 {
@@ -1556,7 +1556,7 @@ void KWDiscretizerUMODL::MergeSplitFrequencyVectors(KWFrequencyVector* kwfvSourc
 	ensure(CheckFrequencyVector(kwfvSourceFrequencyVector2));
 }
 
-void KWDiscretizerUMODL::MergeMergeSplitFrequencyVectors(KWFrequencyVector* kwfvSourceFrequencyVector1,
+void UPDiscretizerUMODL::MergeMergeSplitFrequencyVectors(KWFrequencyVector* kwfvSourceFrequencyVector1,
 							 const KWFrequencyVector* kwfvSourceFrequencyVector2,
 							 KWFrequencyVector* kwfvSourceFrequencyVector3,
 							 const KWFrequencyVector* kwfvFirstSubFrequencyVectorSpec) const
