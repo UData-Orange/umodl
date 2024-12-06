@@ -16,10 +16,44 @@
 #include "KWDataPreparationUnivariateTask.h"
 #include "KWDRDataGrid.h"
 #include "PLParallelTask.h"
+#include "umodlCommandLine.h"
 #include "UPDiscretizerUMODL.h"
 
-constexpr auto attribTraitementName = "TRAITEMENT";
-constexpr auto attribCibleName = "CIBLE";
+class Cleaner
+{
+public:
+	KWAttribute* m_attrib = nullptr;
+	KWSTDatabaseTextFile* m_readDatabase = nullptr;
+	ObjectArray* m_analysableAttributeStatsArr = nullptr;
+
+	void operator()()
+	{
+		if (m_readDatabase)
+		{
+			m_readDatabase->GetObjects()->DeleteAll();
+		}
+
+		if (m_attrib)
+		{
+			m_attrib->RemoveDerivationRule();
+		}
+
+		if (m_analysableAttributeStatsArr)
+		{
+			m_analysableAttributeStatsArr->DeleteAll();
+		}
+
+		KWClassDomain::GetCurrentDomain()->DeleteAllDomains();
+
+		// Nettoyage des taches
+		PLParallelTask::DeleteAllTasks();
+		// Nettoyage des methodes de pretraitement
+		KWDiscretizer::DeleteAllDiscretizers();
+		KWGrouper::DeleteAllGroupers();
+		// nettoyage des regles de derivation
+		KWDerivationRule::DeleteAllDerivationRules();
+	}
+};
 
 // // separation de tupletable en frequencytables selon les valeurs d'un attribut choisi
 // void SeparateWRTSymbolAttribute(const KWTupleTable& inputTable, const int attribIdx, ObjectArray& outputArray)
@@ -129,6 +163,168 @@ void RegisterParallelTasks()
 	// PLParallelTask::RegisterTask(new KDTextTokenSampleCollectionTask);
 }
 
+void InitAndComputeAttributeStats(KWAttributeStats& stats, const ALString& name, const int type,
+				  KWLearningSpec& learningSpec, const KWTupleTable& table)
+{
+	stats.SetLearningSpec(&learningSpec);
+	stats.SetAttributeName(name);
+	stats.SetAttributeType(type);
+	stats.ComputeStats(&table);
+}
+
+bool CheckDictionnary(UMODLCommandLine& commandLine, const KWClass& dico, const ALString& attribTreatName,
+		      const ALString& attribTargetName, ObjectArray& analysableAttribs)
+{
+	require(analysableAttribs.GetSize() == 0);
+	require(not attribTreatName.IsEmpty());
+	require(not attribTargetName.IsEmpty());
+
+	// au moins 3 attributs
+	if (dico.GetAttributeNumber() < 3)
+	{
+		commandLine.AddError("Dictionnary contains less than 3 attributes.");
+		return false;
+	}
+
+	// attribTreatName et attribTargetName doivent faire partie des attributs
+	// attribTreatName et attribTargetName doivent etre categoriels
+	// au moins un des autres attributs est numerique ou categoriel
+
+	bool hasTreat = false;
+	bool hasTarget = false;
+
+	for (KWAttribute* currAttrib = dico.GetHeadAttribute(); currAttrib; dico.GetNextAttribute(currAttrib))
+	{
+		const ALString& name = currAttrib->GetName();
+		const int currType = currAttrib->GetType();
+
+		const bool isSymbol = currType == KWType::Symbol;
+
+		if (not hasTreat or not hasTarget and isSymbol)
+		{
+			if (name == attribTreatName)
+			{
+				hasTreat = true;
+			}
+			else if (name == attribTargetName)
+			{
+				hasTarget = true;
+			}
+			else
+			{
+				analysableAttribs.Add(currAttrib);
+			}
+		}
+		else if (isSymbol or currType == KWType::Continuous)
+		{
+			analysableAttribs.Add(currAttrib);
+		}
+	}
+
+	bool res = true;
+
+	if (analysableAttribs.GetSize() == 0)
+	{
+		commandLine.AddError("Dictionnary does not contain an attribute to be analyzed.");
+		res = false;
+	}
+
+	if (not hasTreat)
+	{
+		commandLine.AddError("Dictionnary does not contain treatment attribute: " + attribTreatName);
+		res = false;
+	}
+
+	if (not hasTarget)
+	{
+		commandLine.AddError("Dictionnary does not contain target attribute: " + attribTargetName);
+		res = false;
+	}
+
+	return res;
+}
+
+bool CheckTreatmentAndTarget(UMODLCommandLine& commandLine, KWAttributeStats& treatStats,
+			     const ALString& attribTreatName, KWAttributeStats& targetStats,
+			     const ALString& attribTargetName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
+			     KWTupleTable& univariate)
+{
+	loader.LoadUnivariate(attribTargetName, &univariate);
+	InitAndComputeAttributeStats(targetStats, attribTargetName, KWType::Symbol, learningSpec, univariate);
+
+	if (GetValueNumber(targetStats) != 2)
+	{
+		commandLine.AddError("Target attribute does not have 2 distinct values, unable to analyse.");
+		return false;
+	}
+
+	loader.LoadUnivariate(attribTreatName, &univariate);
+	InitAndComputeAttributeStats(treatStats, attribTreatName, KWType::Symbol, learningSpec, univariate);
+
+	if (GetValueNumber(treatStats) < 2)
+	{
+		commandLine.AddError(
+		    "Treatment attribute does not have at least 2 two distinct values, unable to analyse.");
+		return false;
+	}
+
+	return true;
+}
+
+bool CheckAnalysableAttributes(UMODLCommandLine& commandLine, const ObjectArray& analysableAttribsInput,
+			       ObjectArray& analysableAttributeStatsArrOutput, KWLearningSpec& learningSpec,
+			       KWTupleTableLoader& loader, KWTupleTable& univariate)
+{
+	require(analysableAttribsInput.GetSize() > 0);
+	require(analysableAttributeStatsArrOutput.GetSize() == 0);
+
+	IntVector toSuppress;
+	for (int i = 0; i < analysableAttribsInput.GetSize(); i++)
+	{
+		auto currAttrib = cast(KWAttribute*, analysableAttribsInput.GetAt(i));
+		auto attribStats = new KWAttributeStats;
+		if (not attribStats)
+		{
+			return false;
+		}
+
+		loader.LoadUnivariate(currAttrib->GetName(), &univariate);
+		InitAndComputeAttributeStats(*attribStats, currAttrib->GetName(), currAttrib->GetType(), learningSpec,
+					     univariate);
+
+		if (GetValueNumber(*attribStats) > 1)
+		{
+			analysableAttributeStatsArrOutput.Add(attribStats);
+		}
+		else
+		{
+			toSuppress.Add(i);
+			delete attribStats;
+		}
+	}
+	for (int i = 0; i < toSuppress.GetSize(); i++)
+	{
+		analysableAttributeStatsArrOutput.RemoveAt(toSuppress.GetAt(i));
+	}
+
+	// verifier qu'il y a bien au moins un attribut analysable
+	if (analysableAttributeStatsArrOutput.GetSize() == 0)
+	{
+		commandLine.AddError("No attribute to analyse.");
+		return false;
+	}
+
+	return true;
+}
+
+bool PrepareSupervisedStats(const ALString& attributeName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
+			    KWTupleTable& univariate)
+{
+	learningSpec.SetTargetAttributeName(attributeName);
+	loader.LoadUnivariate(attributeName, &univariate);
+	return learningSpec.ComputeTargetStats(&univariate);
+}
+
 int main(int argc, char** argv)
 {
 	// boolean bResult;
@@ -140,52 +336,111 @@ int main(int argc, char** argv)
 	// mettre le numero de bloc non desaloue et mettre un poitn d'arret dans Standard.h ligne 686 exit(nExitCode);
 	// MemSetAllocIndexExit(5642);
 
+	Cleaner cleaner;
+	UMODLCommandLine commandLine;
+	UMODLCommandLine::Arguments args;
+	if (not commandLine.InitializeParameters(argc, argv, args))
+	{
+		return EXIT_FAILURE;
+	}
+
+	const ALString& sDomainFileName = args.domainFileName;
+	const ALString& sDataFileName = args.dataFileName;
+	const ALString& sClassName = args.className;
+	const ALString& attribTreatName = args.attribTreatName;
+	const ALString& attribTargetName = args.attribTargetName;
+
 	//test avec paths codes en dur
-	const ALString sClassFileName = "D:/Users/cedric.lecam/Downloads/data1.kdic";
-	const ALString sReadFileName = "D:/Users/cedric.lecam/Downloads/data1.txt";
-	const ALString sTestClassName = "data1";
+	// const ALString sClassFileName = "D:/Users/cedric.lecam/Downloads/data1.kdic";
+	// const ALString sReadFileName = "D:/Users/cedric.lecam/Downloads/data1.txt";
+	// const ALString sTestClassName = "data1";
 
 	// constexpr auto attribVarName = "VAR";
 	// constexpr auto attribTR_CName = "TRAITEMENT_CIBLE";
 
 	//lecture du fichier kdic et des kwclass
 	KWClassDomain* const currentDomainPtr = KWClassDomain::GetCurrentDomain();
-	assert(currentDomainPtr->ReadFile(sClassFileName));
-	KWClass* kwcDico = currentDomainPtr->LookupClass(sTestClassName);
-	check(kwcDico);
-	require(kwcDico->GetAttributeNumber() == 3);
+	if (not currentDomainPtr->ReadFile(sDomainFileName))
+	{
+		commandLine.AddError("Unable to read dictionnary file.");
+		return EXIT_FAILURE;
+	}
+
+	KWClass* kwcDico = currentDomainPtr->LookupClass(sClassName);
+	if (not kwcDico)
+	{
+		commandLine.AddError("Dictionnary does not contain class " + sClassName);
+		cleaner();
+		return EXIT_FAILURE;
+	}
+
+	// inspection du kdic :
+	// au moins 3 attributs dont attribTreatName et attribTargetName
+	// attribTreatName et attribTargetName sont categoriels
+	// au moins un des autres attributs est numerique ou categoriel
+	ObjectArray analysableAttribs;
+	cleaner.m_analysableAttributeStatsArr = &analysableAttribs;
+	if (not CheckDictionnary(commandLine, *kwcDico, attribTreatName, attribTargetName, analysableAttribs))
+	{
+		commandLine.AddError("Loaded dictionnary cannot be analysed.");
+		cleaner();
+		return EXIT_FAILURE;
+	}
 
 	// ajout d'un nouvel attribut, concatenation de TRAITEMENT et CIBLE
 	// la regle de derivation enregistree dans l'attribut doit etre retiree
 	// de l'attribut avant la destruction de l'ensemble des regles de derivation
 	// TODO ajouter la ref de l'attribut dans une liste des attributs dont la regle
 	// de derivation doit etre liberee
-	KWAttribute* const attribConcat = AddConcatenatedAttribute(*kwcDico, attribTraitementName, attribCibleName);
+	KWAttribute* const attribConcat = AddConcatenatedAttribute(*kwcDico, attribTreatName, attribTargetName);
+	if (not attribConcat)
+	{
+		commandLine.AddError("Unable to create concatenated attribute.");
+		cleaner();
+		return EXIT_FAILURE;
+	}
+
+	cleaner.m_attrib = attribConcat;
+
 	const ALString& attribConcatName = attribConcat->GetName();
 
-	if (currentDomainPtr->Check())
-		currentDomainPtr->Compile();
+	if (not currentDomainPtr->Check())
+	{
+		commandLine.AddError("Domain is not consistent.");
+		cleaner();
+		return EXIT_FAILURE;
+	}
+	currentDomainPtr->Compile();
 
+	// verification visuelle de quelques elements du dictionnaire
 	kwcDico->Write(std::cout);
-
 	currentDomainPtr->Write(std::cout);
 
 	auto classptr = currentDomainPtr->GetClassAt(0);
 	classptr->GetTailAttribute()->GetDerivationRule()->Write(std::cout);
-
 	kwcDico->GetDomain()->Write(std::cout);
 
 	std::cout << kwcDico->GetName() << '\n';
 	std::cout << "nombre attribut :" << kwcDico->GetAttributeNumber() << '\n';
 
+	// lecture de la base de donnees
 	KWSTDatabaseTextFile readDatabase;
-	readDatabase.SetClassName(sTestClassName);
-	readDatabase.SetDatabaseName(sReadFileName);
+	readDatabase.SetClassName(sClassName);
+	readDatabase.SetDatabaseName(sDataFileName);
 	readDatabase.SetSampleNumberPercentage(100);
 
 	// Lecture instance par instance
-	readDatabase.ReadAll();
+	if (not readDatabase.ReadAll())
+	{
+		commandLine.AddError("Unable to read the database.");
+		cleaner();
+		return EXIT_FAILURE;
+	}
+	cleaner.m_readDatabase = &readDatabase;
+
 	std::cout << "GetExactObjectNumber :" << readDatabase.GetExactObjectNumber() << '\n';
+
+	// verification des donnees avant analyses
 
 	KWDataPreparationUnivariateTask dataPreparationUnivariateTask;
 
@@ -210,11 +465,54 @@ int main(int argc, char** argv)
 	learningSpec.GetPreprocessingSpec()->GetDiscretizerSpec()->SetSupervisedMethodName("UMODL");
 	learningSpec.SetClass(kwcDico);
 	learningSpec.SetDatabase(&readDatabase);
-	learningSpec.SetTargetAttributeName(attribConcatName);
 
-	// calcul des stats de base
+	// calculs de stats de base en non supervise
+	// pour determiner des caracteristiques simples sur les donnees :
+	// - la cible a exactement 2 valeurs distinctes
+	// - le traitement a au moins 2 valeurs distinctes
+	// - au moins un des attributs a analyser a au moins 2 valeurs distinctes
 	KWTupleTable univariate;
-	tupleTableLoader.LoadUnivariate(attribConcatName, &univariate);
+	tupleTableLoader.LoadUnivariate(attribTargetName, &univariate);
+	if (not learningSpec.ComputeTargetStats(&univariate))
+	{
+		commandLine.AddError("Unable to compute stats.");
+		cleaner();
+		return EXIT_FAILURE;
+	}
+
+	KWAttributeStats treatStats;
+	KWAttributeStats targetStats;
+
+	if (not CheckTreatmentAndTarget(commandLine, treatStats, attribTreatName, targetStats, attribTargetName,
+					learningSpec, tupleTableLoader, univariate))
+	{
+		commandLine.AddError("Unable to analyse data with current treatment and target.");
+		cleaner();
+		return EXIT_FAILURE;
+	}
+
+	// verification des attributs potentiellement analysables : au moins 2 valeurs distinctes
+	ObjectArray analysableAttributeStatsArr;
+
+	if (not CheckAnalysableAttributes(commandLine, analysableAttribs, analysableAttributeStatsArr, learningSpec,
+					  tupleTableLoader, univariate))
+	{
+		commandLine.AddError("Unable to analyse data.");
+		cleaner();
+		return EXIT_FAILURE;
+	}
+
+	cleaner.m_analysableAttributeStatsArr = &analysableAttributeStatsArr;
+
+	///////////////////////////////////////////////////////////////////////
+	// mode supervise
+
+	if (not PrepareSupervisedStats(attribConcatName, learningSpec, tupleTableLoader, univariate))
+	{
+		commandLine.AddError("Failed to compute stats on concatenated attribute.");
+		cleaner();
+		return EXIT_FAILURE;
+	}
 
 	// recuperer les valeurs de traitement_cible trouvees
 	SymbolVector symbolsSeen;
@@ -222,8 +520,6 @@ int main(int argc, char** argv)
 	{
 		symbolsSeen.Add(univariate.GetAt(i)->GetSymbolAt(0));
 	}
-
-	learningSpec.ComputeTargetStats(&univariate);
 
 	// accumulation des stats d'attribut par calcul supervise selon la cible concatenee
 	ObjectArray attribStats;
@@ -346,21 +642,22 @@ int main(int argc, char** argv)
 
 	std::cout << "fin  test" << endl;
 
-	readDatabase.GetObjects()->DeleteAll();
-	// rappel : l'attribut cree par concatenation est proprietaire de sa DerivationRule.
-	// comme il y a d'autres DerivationRules a liberer, celle de l'attribut doit etre dissociee
-	// de celui-ci pour eviter d'acceder a de la memoire deja liberee pendant la suppression de
-	// toutes les regles du meme coup
-	attribConcat->RemoveDerivationRule();
-	KWClassDomain::GetCurrentDomain()->DeleteAllDomains();
-	// Nettoyage des taches
-	PLParallelTask::DeleteAllTasks();
-	// Nettoyage des methodes de pretraitement
-	KWDiscretizer::DeleteAllDiscretizers();
-	KWGrouper::DeleteAllGroupers();
-	// nettoyage des regles de derivation
-	KWDerivationRule::DeleteAllDerivationRules();
+	// readDatabase.GetObjects()->DeleteAll();
+	// // rappel : l'attribut cree par concatenation est proprietaire de sa DerivationRule.
+	// // comme il y a d'autres DerivationRules a liberer, celle de l'attribut doit etre dissociee
+	// // de celui-ci pour eviter d'acceder a de la memoire deja liberee pendant la suppression de
+	// // toutes les regles du meme coup
+	// attribConcat->RemoveDerivationRule();
+	// KWClassDomain::GetCurrentDomain()->DeleteAllDomains();
+	// // Nettoyage des taches
+	// PLParallelTask::DeleteAllTasks();
+	// // Nettoyage des methodes de pretraitement
+	// KWDiscretizer::DeleteAllDiscretizers();
+	// KWGrouper::DeleteAllGroupers();
+	// // nettoyage des regles de derivation
+	// KWDerivationRule::DeleteAllDerivationRules();
 	//if (commandLine.ComputeHistogram(argc, argv);)
+	cleaner();
 	return EXIT_SUCCESS;
 	//else
 	//	return EXIT_FAILURE;

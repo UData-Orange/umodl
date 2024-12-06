@@ -12,21 +12,36 @@
 #include "Version.h"
 
 ////////////////////////////////////////////////////////////////
-// Classe KhistoCommandLine
+// Classe UMODLCommandLine
 // Lancement du calcul d'un histogramme de puis la ligne de commande
-class KhistoCommandLine : public Object
+class UMODLCommandLine : public Object
 {
 public:
-	// Constructeur
-	KhistoCommandLine();
-	~KhistoCommandLine();
+	class Arguments : public Object
+	{
+	public:
+		ALString dataFileName;
+		ALString domainFileName;
+		ALString className;
+		ALString attribTreatName;
+		ALString attribTargetName;
+	};
 
 	// Lancement depuis la ligne de commande
 	boolean ComputeHistogram(int argc, char** argv);
 
+	// Initialisation des parametres
+	// Renvoie true si ok, en parametrant le nom du fichier de valeur
+	// et du fichier dictionnaire en entree
+	bool InitializeParameters(int argc, char** argv, Arguments& res);
+
 	// Libelles utilisateur
 	const ALString GetClassLabel() const override;
 	const ALString GetObjectLabel() const override;
+
+	const ALString& GetDataFileName() const;
+	const ALString& GetDomainFileName() const;
+	const ALString& GetClassName() const;
 
 	////////////////////////////////////////////////////////
 	///// Implementation
@@ -81,26 +96,26 @@ protected:
 	void AddInputFileWarning(InputBufferedFile* inputFile, longint lRecordIndex, const ALString& sLabel);
 	void AddInputFileError(InputBufferedFile* inputFile, longint lRecordIndex, const ALString& sLabel);
 
-	// Initialisation des parametres
-	// Initialize l'objet de parametrage histogramSpec
-	// Renvoie true si ok, en parametrant le nom des fichiers de valeur en entree et du fichier d'histogramme en
-	// sortie
-	boolean InitializeParameters(int argc, char** argv);
-
 	// Affichage de l'aide
 	void ShowHelp();
 
 	// Nom du fichier de donnees
 	ALString sDataFileName;
 
+	// Nom du fichier de dictionnaire
+	ALString sClassFileName;
+
 	// Nom du fichier contenant l'histogramme resultat
 	ALString sHistogramFileName;
 
+	// Nom de la classe a lire dans le dictionnaire
+	ALString sClassName;
+
 	// Indicateur de l'option d'analyse exploratoire
-	boolean bExploratoryAnalysis;
+	boolean bExploratoryAnalysis = false;
 
 	// Indicateur de l'option de format json
-	boolean bJsonFormat;
+	boolean bJsonFormat = false;
 
 	// Objet de parametrage des histogrammes
 	MHHistogramSpec histogramSpec;

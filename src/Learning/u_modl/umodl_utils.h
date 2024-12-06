@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "KWAttributeStats.h"
 #include "KWContinuous.h"
 #include "KWFrequencyVector.h"
 #include "KWSymbol.h"
@@ -37,6 +38,11 @@ inline int SearchContinuous(const ContinuousVector& cv, const Continuous s)
 inline IntVector* GetDenseVectorAt(KWFrequencyTable& fTable, int idx)
 {
 	return cast(KWDenseFrequencyVector*, fTable.GetFrequencyVectorAt(idx))->GetFrequencyVector();
+}
+
+inline int GetValueNumber(KWAttributeStats& attStats)
+{
+	return attStats.GetDescriptiveStats()->GetValueNumber();
 }
 
 ////////////////////////////////////////////////////////////////////////

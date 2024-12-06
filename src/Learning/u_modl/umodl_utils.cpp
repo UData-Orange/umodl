@@ -12,7 +12,6 @@ ALString PrepareName(const ALString& name)
 {
 	ALString res = name.Left(min(name.GetLength(), 30));
 	res.TrimRight();
-	ensure(not res.IsEmpty());
 	return res;
 }
 
@@ -39,10 +38,20 @@ KWDerivationRuleOperand* MakeSeparatorOperand()
 	return res;
 }
 
-void InitConcatAttrib(KWAttribute& toInit, const ALString& attribOperand1, const ALString attribOperand2)
+bool InitConcatAttrib(KWAttribute& toInit, const ALString& attribOperand1, const ALString attribOperand2)
 {
 	auto sNameOperand1 = PrepareName(attribOperand1);
+	if (sNameOperand1.IsEmpty())
+	{
+		toInit.AddError("Trimming of attribute name " + attribOperand1 + " returned an empty string.");
+		return false;
+	}
 	auto sNameOperand2 = PrepareName(attribOperand2);
+	if (sNameOperand2.IsEmpty())
+	{
+		toInit.AddError("Trimming of attribute name " + attribOperand2 + " returned an empty string.");
+		return false;
+	}
 	toInit.SetName(sNameOperand1 + "_" + sNameOperand2);
 
 	// add derivation rule
@@ -60,6 +69,8 @@ void InitConcatAttrib(KWAttribute& toInit, const ALString& attribOperand1, const
 	toInit.SetType(concatRule->GetType());
 	// toInit.SetLoaded(false);
 	toInit.SetCost(1.0);
+
+	return true;
 }
 
 KWAttribute* AddConcatenatedAttribute(KWClass& dico, const ALString& attribOperand1, const ALString attribOperand2)
@@ -67,9 +78,17 @@ KWAttribute* AddConcatenatedAttribute(KWClass& dico, const ALString& attribOpera
 	require(not attribOperand1.IsEmpty() and not attribOperand2.IsEmpty());
 
 	auto concatAttrib = new KWAttribute;
-	check(concatAttrib);
+	if (not concatAttrib)
+	{
+		return nullptr;
+	}
 
-	InitConcatAttrib(*concatAttrib, attribOperand1, attribOperand2);
+	if (not InitConcatAttrib(*concatAttrib, attribOperand1, attribOperand2))
+	{
+		delete concatAttrib;
+		return nullptr;
+	}
+
 	concatAttrib->CompleteTypeInfo(&dico);
 	dico.InsertAttribute(concatAttrib);
 	return concatAttrib;
