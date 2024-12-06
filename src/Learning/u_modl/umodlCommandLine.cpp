@@ -4,15 +4,7 @@
 
 #include "UmodlCommandLine.h"
 
-KhistoCommandLine::KhistoCommandLine()
-{
-	bExploratoryAnalysis = false;
-	bJsonFormat = false;
-}
-
-KhistoCommandLine::~KhistoCommandLine() {}
-
-boolean KhistoCommandLine::ComputeHistogram(int argc, char** argv)
+boolean UMODLCommandLine::ComputeHistogram(int argc, char** argv)
 {
 	boolean bOk = true;
 	MHDiscretizerTruncationMODLHistogram histogramBuilder;
@@ -22,7 +14,7 @@ boolean KhistoCommandLine::ComputeHistogram(int argc, char** argv)
 	MHMODLHistogramAnalysisStats* histogramAnalysisStats;
 
 	// Initialisation des parametres
-	bOk = InitializeParameters(argc, argv);
+	bOk = false; //InitializeParameters(argc, argv);
 
 	// Lecture des donnees
 	if (bOk)
@@ -84,18 +76,33 @@ boolean KhistoCommandLine::ComputeHistogram(int argc, char** argv)
 	return bOk;
 }
 
-const ALString KhistoCommandLine::GetClassLabel() const
+const ALString UMODLCommandLine::GetClassLabel() const
 {
-	return "khisto";
+	return "umodl";
 }
 
-const ALString KhistoCommandLine::GetObjectLabel() const
+const ALString UMODLCommandLine::GetObjectLabel() const
 {
 	return sDataFileName;
 }
 
-boolean KhistoCommandLine::ExportHistogramStatsCsvReportFile(const MHMODLHistogramStats* histogramStats,
-							     const ALString& sFileName)
+const ALString& UMODLCommandLine::GetDataFileName() const
+{
+	return sDataFileName;
+}
+
+const ALString& UMODLCommandLine::GetDomainFileName() const
+{
+	return sClassFileName;
+}
+
+const ALString& UMODLCommandLine::GetClassName() const
+{
+	return sClassName;
+}
+
+boolean UMODLCommandLine::ExportHistogramStatsCsvReportFile(const MHMODLHistogramStats* histogramStats,
+							    const ALString& sFileName)
 {
 	boolean bOk = true;
 	fstream fstHistogram;
@@ -146,8 +153,9 @@ boolean KhistoCommandLine::ExportHistogramStatsCsvReportFile(const MHMODLHistogr
 	return bOk;
 }
 
-boolean KhistoCommandLine::ExportHistogramAnalysisStastCsvReportFiles(
-    const MHMODLHistogramAnalysisStats* histogramAnalysisStats, const ALString& sBaseFileName)
+boolean
+UMODLCommandLine::ExportHistogramAnalysisStastCsvReportFiles(const MHMODLHistogramAnalysisStats* histogramAnalysisStats,
+							     const ALString& sBaseFileName)
 {
 	boolean bOk = true;
 	const MHMODLHistogramStats* histogramStats;
@@ -260,8 +268,8 @@ boolean KhistoCommandLine::ExportHistogramAnalysisStastCsvReportFiles(
 	return bOk;
 }
 
-boolean KhistoCommandLine::ExportHistogramStatsJson(const MHMODLHistogramStats* histogramStats, const ALString& sKey,
-						    JSONFile* jsonFile)
+boolean UMODLCommandLine::ExportHistogramStatsJson(const MHMODLHistogramStats* histogramStats, const ALString& sKey,
+						   JSONFile* jsonFile)
 {
 	boolean bOk = true;
 	int nTotalFrequency;
@@ -344,8 +352,9 @@ boolean KhistoCommandLine::ExportHistogramStatsJson(const MHMODLHistogramStats* 
 	return bOk;
 }
 
-boolean KhistoCommandLine::ExportHistogramAnalysisStastJsonReportFile(
-    const MHMODLHistogramAnalysisStats* histogramAnalysisStats, const ALString& sFileName)
+boolean
+UMODLCommandLine::ExportHistogramAnalysisStastJsonReportFile(const MHMODLHistogramAnalysisStats* histogramAnalysisStats,
+							     const ALString& sFileName)
 {
 	boolean bOk = true;
 	JSONFile jsonHistogram;
@@ -455,8 +464,8 @@ boolean KhistoCommandLine::ExportHistogramAnalysisStastJsonReportFile(
 	return bOk;
 }
 
-boolean KhistoCommandLine::ReadBins(ContinuousVector*& cvLowerValues, ContinuousVector*& cvUpperValues,
-				    IntVector*& ivFrequencies)
+boolean UMODLCommandLine::ReadBins(ContinuousVector*& cvLowerValues, ContinuousVector*& cvUpperValues,
+				   IntVector*& ivFrequencies)
 {
 	boolean bOk = true;
 	int nFileFormat;
@@ -721,7 +730,7 @@ boolean KhistoCommandLine::ReadBins(ContinuousVector*& cvLowerValues, Continuous
 	return bOk;
 }
 
-boolean KhistoCommandLine::ReadValues(ContinuousVector*& cvValues)
+boolean UMODLCommandLine::ReadValues(ContinuousVector*& cvValues)
 {
 	boolean bOk = true;
 	InputBufferedFile inputFile;
@@ -855,8 +864,8 @@ boolean KhistoCommandLine::ReadValues(ContinuousVector*& cvValues)
 	return bOk;
 }
 
-boolean KhistoCommandLine::ReadValue(InputBufferedFile* inputFile, longint lRecordIndex, Continuous& cValue,
-				     boolean& bEndOfLine)
+boolean UMODLCommandLine::ReadValue(InputBufferedFile* inputFile, longint lRecordIndex, Continuous& cValue,
+				    boolean& bEndOfLine)
 {
 	boolean bOk = true;
 	char* sField;
@@ -916,8 +925,8 @@ boolean KhistoCommandLine::ReadValue(InputBufferedFile* inputFile, longint lReco
 	return bOk;
 }
 
-boolean KhistoCommandLine::ReadFrequency(InputBufferedFile* inputFile, longint lRecordIndex,
-					 longint& lCumulatedFrequency, int& nFrequency, boolean& bEndOfLine)
+boolean UMODLCommandLine::ReadFrequency(InputBufferedFile* inputFile, longint lRecordIndex,
+					longint& lCumulatedFrequency, int& nFrequency, boolean& bEndOfLine)
 {
 	boolean bOk = true;
 	char* sField;
@@ -1021,7 +1030,7 @@ boolean KhistoCommandLine::ReadFrequency(InputBufferedFile* inputFile, longint l
 	return bOk;
 }
 
-void KhistoCommandLine::AddInputFileWarning(InputBufferedFile* inputFile, longint lRecordIndex, const ALString& sLabel)
+void UMODLCommandLine::AddInputFileWarning(InputBufferedFile* inputFile, longint lRecordIndex, const ALString& sLabel)
 {
 	ALString sTmp;
 
@@ -1033,7 +1042,7 @@ void KhistoCommandLine::AddInputFileWarning(InputBufferedFile* inputFile, longin
 		inputFile->AddWarning(sLabel);
 }
 
-void KhistoCommandLine::AddInputFileError(InputBufferedFile* inputFile, longint lRecordIndex, const ALString& sLabel)
+void UMODLCommandLine::AddInputFileError(InputBufferedFile* inputFile, longint lRecordIndex, const ALString& sLabel)
 {
 	ALString sTmp;
 
@@ -1045,111 +1054,101 @@ void KhistoCommandLine::AddInputFileError(InputBufferedFile* inputFile, longint 
 		inputFile->AddError(sLabel);
 }
 
-boolean KhistoCommandLine::InitializeParameters(int argc, char** argv)
+boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments& res)
 {
-	boolean bOk = true;
-	int i;
-	ALString sArgument;
-	ALString sOption;
-
 	// Reinitialisation des options
-	sDataFileName = "";
-	sHistogramFileName = "";
-	bExploratoryAnalysis = false;
-	bJsonFormat = false;
+	// sDataFileName = "";
+	// sClassFileName = "";
+	// bExploratoryAnalysis = false;
+	// bJsonFormat = false;
 
 	// On recherche deja les options standard
-	if (bOk)
+	ALString sArgument;
+	for (int i = 1; i < argc; i++)
 	{
-		for (i = 1; i < argc; i++)
-		{
-			sArgument = argv[i];
+		sArgument = argv[i];
 
-			// Version
-			if (sArgument == "-v")
-			{
-				cout << GetClassLabel() << " " << UMODL_VERSION << "\n ";
-				cout << "Copyright (C) 2024 Orange labs\n";
-				bOk = false;
-			}
-			// Aide
-			else if (sArgument == "-h" or sArgument == "--h" or sArgument == "--help")
-			{
-				ShowHelp();
-				bOk = false;
-			}
+		// Version
+		if (sArgument == "-v")
+		{
+			std::cout << GetClassLabel() << " " << UMODL_VERSION << "\n "
+				  << "Copyright (C) 2024 Orange labs\n";
+			return false;
+		}
+		// Aide
+		else if (sArgument == "-h" or sArgument == "--h" or sArgument == "--help")
+		{
+			ShowHelp();
+			return false;
 		}
 	}
 
 	// Test du bon nombre d'options
-	if (bOk)
+	if (argc != 6)
 	{
-		if (argc < 3 or argc > 5)
-		{
-			cout << GetClassLabel() << ": invalid number of parameters\n";
-			cout << "Try '" << GetClassLabel() << "' -h' for more information.\n";
-			bOk = false;
-		}
+		const ALString& classLabel = GetClassLabel();
+		ALString errMsg =
+		    classLabel + ": invalid number of parameters\nTry '" + classLabel + "' -h' for more information.\n";
+		AddError(errMsg);
+		return false;
 	}
 
 	// Test des options presentes
-	if (bOk and argc >= 3)
-	{
-		for (i = 1; i < argc - 2; i++)
-		{
-			sArgument = argv[i];
+	// if (argc >= 3)
+	// {
+	// 	for (int i = 1; i < argc - 2; i++)
+	// 	{
+	// 		sArgument = argv[i];
 
-			// Analyse de l'option
-			if (sArgument == "-e")
-				bExploratoryAnalysis = true;
-			else if (sArgument == "-j")
-				bJsonFormat = true;
-			else
-			{
-				cout << GetClassLabel() << ": invalid option " + sArgument + "\n ";
-				cout << "Try '" << GetClassLabel() << "' -h' for more information.\n";
-				bOk = false;
-				break;
-			}
-		}
-	}
+	// 		// Analyse de l'option
+	// 		if (sArgument == "-e")
+	// 			bExploratoryAnalysis = true;
+	// 		else if (sArgument == "-j")
+	// 			bJsonFormat = true;
+	// 		else
+	// 		{
+	// 			cout << GetClassLabel() << ": invalid option " + sArgument + "\n ";
+	// 			cout << "Try '" << GetClassLabel() << "' -h' for more information.\n";
+	// 			return false;
+	// 		}
+	// 	}
+	// }
 
 	// On recopie le parametrage
-	if (bOk)
+	res.dataFileName = argv[1];
+	res.domainFileName = argv[2];
+	res.className = argv[3];
+	res.attribTreatName = argv[4];
+	res.attribTargetName = argv[5];
+	if (res.dataFileName == res.domainFileName)
 	{
-		assert(argc >= 3 and argc <= 5);
-		sDataFileName = argv[argc - 2];
-		sHistogramFileName = argv[argc - 1];
-		if (sDataFileName == sHistogramFileName)
-		{
-			bOk = false;
-			cout << "Result histogram file name must be different from input values file name ("
-			     << sDataFileName << ")\n";
-		}
+		std::cout << "Result file name must be different from input values file name (" << res.dataFileName
+			  << ")\n";
+		return false;
 	}
-	return bOk;
+	return true;
 }
 
-void KhistoCommandLine::ShowHelp()
+void UMODLCommandLine::ShowHelp()
 {
-	cout << "Usage: " << GetClassLabel() << " [VALUES] [HISTOGRAM]\n ";
-	cout << "Compute histogram from the data in FILE.\n";
-	cout << " The resulting histogram is output in HISTOGRAM file, with the lower bound, upper bound,\n";
-	cout << "  length, frequency, probability and density per bin.\n ";
+	cout << "Usage: " << GetClassLabel() << " [VALUES] [DICTIONNARY] [CLASS] [TREATMENT] [TARGET]\n ";
+	// cout << "Compute histogram from the data in FILE.\n";
+	// cout << " The resulting histogram is output in HISTOGRAM file, with the lower bound, upper bound,\n";
+	// cout << "  length, frequency, probability and density per bin.\n ";
 
-	// Option specialisee
-	cout << "\t-e\toutput a series of histograms by increasing accuracy for exploratory analysis purposes\n";
-	cout << "\t-j\toutputs are produced in one json file\n";
+	// // Option specialisee
+	// cout << "\t-e\toutput a series of histograms by increasing accuracy for exploratory analysis purposes\n";
+	// cout << "\t-j\toutputs are produced in one json file\n";
 
 	// Options generales
 	cout << "\t-h\tdisplay this help and exit\n";
 	cout << "\t-v\tdisplay version information and exit\n";
 
 	// Aide additionnelle
-	cout << "\n";
-	cout << "The output histogram is as accurate and interpretable as possible.\n";
-	cout << "Using the -e option, all histograms internally computed are output by  increasing accuracy.\n";
-	cout << " Each histogram of the series uses an index in its suffix(e.g. \".1\"), and an additional file\n";
-	cout << " with the suffix \".series\" is produced, with indicators per histogram.\n";
-	cout << "The -j option can be combined with the -e option to get all outputs in one file.\n";
+	// cout << "\n";
+	// cout << "The output histogram is as accurate and interpretable as possible.\n";
+	// cout << "Using the -e option, all histograms internally computed are output by  increasing accuracy.\n";
+	// cout << " Each histogram of the series uses an index in its suffix(e.g. \".1\"), and an additional file\n";
+	// cout << " with the suffix \".series\" is produced, with indicators per histogram.\n";
+	// cout << "The -j option can be combined with the -e option to get all outputs in one file.\n";
 }
