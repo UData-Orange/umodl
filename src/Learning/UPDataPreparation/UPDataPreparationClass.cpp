@@ -34,7 +34,7 @@ void UPDataPreparationClass::ComputeDataPreparationFromAttribStats(ObjectArray* 
 	// Ajout d'attributs derives pour toute stats de preparation disponible (univarie, bivarie...)
 	for (int i = 0; i < oaAttribStats->GetSize(); i++)
 	{
-		const auto preparedStats = cast(KWDataPreparationStats*, oaAttribStats->GetAt(i));
+		KWDataPreparationStats* const preparedStats = cast(KWDataPreparationStats*, oaAttribStats->GetAt(i));
 
 		// Meta-donne de Level sur l'attribut natif, uniquement dans le cas univarie
 		if (preparedStats->GetTargetAttributeType() != KWType::None and
@@ -52,7 +52,7 @@ void UPDataPreparationClass::ComputeDataPreparationFromAttribStats(ObjectArray* 
 		if (preparedStats->GetPreparedDataGridStats())
 		{
 			// Memorisation des infos de preparation de l'attribut
-			auto const dataPreparationAttribute = new KWDataPreparationAttribute;
+			KWDataPreparationAttribute* const dataPreparationAttribute = new KWDataPreparationAttribute;
 			check(dataPreparationAttribute);
 			dataPreparationAttribute->InitFromDataPreparationStats(kwcDataPreparationClass, preparedStats);
 			oaDataPreparationAttributes.Add(dataPreparationAttribute);
