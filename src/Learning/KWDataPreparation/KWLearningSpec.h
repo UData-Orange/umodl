@@ -336,7 +336,7 @@ protected:
 	void ResetTargetStats();
 
 	// Calcul des couts du model null
-	void ComputeNullCost();
+	virtual void ComputeNullCost();
 
 	// Calcul de l'index de la valeur cible principale (-1 si aucune)
 	// parmi les valeurs cibles

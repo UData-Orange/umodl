@@ -5,6 +5,7 @@
 #pragma once
 
 #include "KWDiscretizerMODL.h"
+#include "UPUnivariatePartitionCost.h"
 
 //////////////////////////////////////////////////////////////////////////////////
 // Algorithme MODL de fusion des lignes adjacentes d'une table de contingence
