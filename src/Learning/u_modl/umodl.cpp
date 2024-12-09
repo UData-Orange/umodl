@@ -12,17 +12,18 @@
 #include "KWSTDatabase.h"
 #include "KWClassDomain.h"
 #include "KWSTDatabaseTextFile.h"
-#include "KWLearningSpec.h"
 #include "KWDataPreparationUnivariateTask.h"
 #include "KWDRDataGrid.h"
 #include "PLParallelTask.h"
 #include "umodlCommandLine.h"
+#include "UPLearningSpec.h"
 #include "UPDiscretizerUMODL.h"
+#include "UPAttributeStats.h"
 
 class Cleaner
 {
 public:
-	KWAttribute* m_attrib = nullptr;
+	// KWAttribute* m_attrib = nullptr;
 	KWSTDatabaseTextFile* m_readDatabase = nullptr;
 	ObjectArray* m_analysableAttributeStatsArr = nullptr;
 	KWClassDomain* m_domain = nullptr;
@@ -34,10 +35,10 @@ public:
 			m_readDatabase->GetObjects()->DeleteAll();
 		}
 
-		if (m_attrib)
-		{
-			m_attrib->RemoveDerivationRule();
-		}
+		// if (m_attrib)
+		// {
+		// 	m_attrib->RemoveDerivationRule();
+		// }
 
 		if (m_analysableAttributeStatsArr)
 		{
@@ -406,19 +407,11 @@ int main(int argc, char** argv)
 	// de l'attribut avant la destruction de l'ensemble des regles de derivation
 	// TODO ajouter la ref de l'attribut dans une liste des attributs dont la regle
 	// de derivation doit etre liberee
-	KWAttribute* const attribConcat = MakeConcatenatedAttribute(*kwcDico, attribTreatName, attribTargetName);
-	if (not attribConcat)
-	{
-		commandLine.AddError("Unable to create concatenated attribute.");
-		cleaner();
-		return EXIT_FAILURE;
-	}
+	//KWAttribute* const attribConcat = AddConcatenatedAttribute(*kwcDico, attribTreatName, attribTargetName);
+	//const ALString& attribConcatName = attribConcat->GetName();
 
-	cleaner.m_attrib = attribConcat;
+	// kwcDico->InsertAttribute(attribConcat);
 
-	const ALString& attribConcatName = attribConcat->GetName();
-
-	kwcDico->InsertAttribute(attribConcat);
 	if (not currentDomainPtr->Check())
 	{
 		commandLine.AddError("Domain is not consistent.");
@@ -431,8 +424,8 @@ int main(int argc, char** argv)
 	kwcDico->Write(std::cout);
 	currentDomainPtr->Write(std::cout);
 
-	const KWClass* const classptr = currentDomainPtr->GetClassAt(0);
-	classptr->GetTailAttribute()->GetDerivationRule()->Write(std::cout);
+	// const KWClass* const classptr = currentDomainPtr->GetClassAt(0);
+	// classptr->GetTailAttribute()->GetDerivationRule()->Write(std::cout);
 	kwcDico->GetDomain()->Write(std::cout);
 
 	std::cout << kwcDico->GetName() << '\n';
@@ -457,7 +450,7 @@ int main(int argc, char** argv)
 
 	// verification des donnees avant analyses
 
-	KWDataPreparationUnivariateTask dataPreparationUnivariateTask;
+	//KWDataPreparationUnivariateTask dataPreparationUnivariateTask;
 
 	// Enregistrement des methodes de pretraitement supervisees et non supervisees
 	RegisterDiscretizers();
@@ -477,60 +470,76 @@ int main(int argc, char** argv)
 	tupleTableLoader.SetInputDatabaseObjects(readDatabase.GetObjects());
 
 	// creation de learninspec
-	KWLearningSpec learningSpec;
+	UPLearningSpec learningSpec;
 	learningSpec.GetPreprocessingSpec()->GetDiscretizerSpec()->SetSupervisedMethodName("UMODL");
 	learningSpec.SetClass(kwcDico);
 	learningSpec.SetDatabase(&readDatabase);
+	learningSpec.SetTargetAttributeName(attribTargetName);
+	learningSpec.SetTreatementAttributeName(attribTreatName);
 
-	// calculs de stats de base en non supervise
-	// pour determiner des caracteristiques simples sur les donnees :
-	// - la cible a exactement 2 valeurs distinctes
-	// - le traitement a au moins 2 valeurs distinctes
-	// - au moins un des attributs a analyser a au moins 2 valeurs distinctes
-	KWTupleTable univariate;
-	if (not PrepareStats(attribTargetName, learningSpec, tupleTableLoader, univariate,
-			     StatPreparationMode::Unsupervised))
-	{
-		commandLine.AddError("Unable to compute stats.");
-		cleaner();
-		return EXIT_FAILURE;
-	}
+	//DDD
+	cout << "Initial learning spec: " << &learningSpec << endl;
 
-	KWAttributeStats treatStats;
-	KWAttributeStats targetStats;
+	// // calculs de stats de base en non supervise
+	// // pour determiner des caracteristiques simples sur les donnees :
+	// // - la cible a exactement 2 valeurs distinctes
+	// // - le traitement a au moins 2 valeurs distinctes
+	// // - au moins un des attributs a analyser a au moins 2 valeurs distinctes
+	// KWTupleTable univariate;
+	// if (not PrepareStats(attribTargetName, learningSpec, tupleTableLoader, univariate,
+	// 		     StatPreparationMode::Unsupervised))
+	// {
+	// 	commandLine.AddError("Unable to compute stats.");
+	// 	cleaner();
+	// 	return EXIT_FAILURE;
+	// }
 
-	if (not CheckTreatmentAndTarget(commandLine, treatStats, attribTreatName, targetStats, attribTargetName,
-					learningSpec, tupleTableLoader, univariate))
-	{
-		commandLine.AddError("Unable to analyse data with current treatment and target.");
-		cleaner();
-		return EXIT_FAILURE;
-	}
+	// KWAttributeStats treatStats;
+	// KWAttributeStats targetStats;
 
-	// verification des attributs potentiellement analysables : au moins 2 valeurs distinctes
-	ObjectArray analysableAttributeStatsArr;
+	// if (not CheckTreatmentAndTarget(commandLine, treatStats, attribTreatName, targetStats, attribTargetName,
+	// 				learningSpec, tupleTableLoader, univariate))
+	// {
+	// 	commandLine.AddError("Unable to analyse data with current treatment and target.");
+	// 	cleaner();
+	// 	return EXIT_FAILURE;
+	// }
 
-	if (not CheckAnalysableAttributes(commandLine, analysableAttribs, analysableAttributeStatsArr, learningSpec,
-					  tupleTableLoader, univariate))
-	{
-		commandLine.AddError("Unable to analyse data.");
-		cleaner();
-		return EXIT_FAILURE;
-	}
+	// // verification des attributs potentiellement analysables : au moins 2 valeurs distinctes
+	// ObjectArray analysableAttributeStatsArr;
 
-	cleaner.m_analysableAttributeStatsArr = &analysableAttributeStatsArr;
+	// if (not CheckAnalysableAttributes(commandLine, analysableAttribs, analysableAttributeStatsArr, learningSpec,
+	// 				  tupleTableLoader, univariate))
+	// {
+	// 	commandLine.AddError("Unable to analyse data.");
+	// 	cleaner();
+	// 	return EXIT_FAILURE;
+	// }
+
+	// cleaner.m_analysableAttributeStatsArr = &analysableAttributeStatsArr;
 
 	///////////////////////////////////////////////////////////////////////
 	// mode supervise
 
-	if (not PrepareStats(attribConcatName, learningSpec, tupleTableLoader, univariate,
-			     StatPreparationMode::Supervised))
-	{
-		commandLine.AddError("Failed to compute stats on concatenated attribute.");
-		cleaner();
-		return EXIT_FAILURE;
-	}
+	// if (not PrepareStats(attribConcatName, learningSpec, tupleTableLoader, univariate,
+	// 		     StatPreparationMode::Supervised))
+	// {
+	// 	commandLine.AddError("Failed to compute stats on concatenated attribute.");
+	// 	cleaner();
+	// 	return EXIT_FAILURE;
+	// }
+	// tupleTableLoader.LoadUnivariate(attribConcatName, &univariate);
 
+	KWTupleTable univariate;
+	tupleTableLoader.LoadUnivariate(attribTreatName, &univariate);
+
+	learningSpec.ComputeTreatementStats(&univariate);
+	cout << "nb valeur traitement : "
+	     << learningSpec.GetTreatementValueStats()->GetAttributeAt(0)->GetInitialValueNumber() << endl;
+
+	// calcul des stats de base de la cible
+
+	tupleTableLoader.LoadUnivariate(attribTargetName, &univariate);
 	// recuperer les valeurs de traitement_cible trouvees
 	SymbolVector symbolsSeen;
 	for (int i = 0; i < univariate.GetSize(); i++)
@@ -538,23 +547,43 @@ int main(int argc, char** argv)
 		symbolsSeen.Add(univariate.GetAt(i)->GetSymbolAt(0));
 	}
 
+	learningSpec.ComputeTargetStats(&univariate);
+
+	//DDD
+	cout << "Initial learning spec 2: " << &learningSpec << " " << learningSpec.GetNullPreparationCost() << endl;
+	cout << "Initial learning spec 3: " << &learningSpec << " " << learningSpec.GetNullCost() << endl;
+
 	// accumulation des stats d'attribut par calcul supervise selon la cible concatenee
 	ObjectArray attribStats;
 
 	// tupletable des variables et de l'attribut concatene, avec attribut concatene pour cible
 	KWTupleTable bivariateVarConcat;
+	KWTupleTable multivariatevaruplift;
 
 	// boucle sur les attributs pour preparer les stats avant reconstruction du dictionnaire
-	for (KWAttribute* currAttrib = kwcDico->GetHeadAttribute(); currAttrib->GetName() != attribConcatName;
+	for (KWAttribute* currAttrib = kwcDico->GetHeadAttribute();
+	     currAttrib->GetName() != attribTargetName && currAttrib->GetName() != attribTreatName;
 	     kwcDico->GetNextAttribute(currAttrib))
 	{
 		const ALString& attribName = currAttrib->GetName();
+		StringVector svAttributeNames;
+		svAttributeNames.Initialize();
+		//svAttributeNames.SetSize(3);
+		svAttributeNames.Add(attribName);
+		svAttributeNames.Add(attribTargetName);
+		svAttributeNames.Add(attribTreatName);
 
-		tupleTableLoader.LoadBivariate(attribName, attribConcatName, &bivariateVarConcat);
+		svAttributeNames.GetSize();
+		//tupleTableLoader.LoadBivariate(attribName, attribTreatName, &bivariateVarConcat);
+		tupleTableLoader.LoadMultivariate(&svAttributeNames, &multivariatevaruplift);
 
-		KWAttributeStats* const currStats = new KWAttributeStats;
-		InitAndComputeStats(*currStats, *currAttrib, learningSpec, bivariateVarConcat);
+		UPAttributeStats* const currStats = new UPAttributeStats;
+		InitAndComputeStats(*currStats, *currAttrib, learningSpec, multivariatevaruplift);
 		attribStats.Add(currStats);
+
+		//DDD
+		cout << "Attribute stats learning spec: " << currStats->GetLearningSpec() << " "
+		     << learningSpec.GetNullCost() << endl;
 
 		bivariateVarConcat.CleanAll();
 	}
@@ -569,30 +598,30 @@ int main(int argc, char** argv)
 	attribStats.DeleteAll();
 
 	// test de repartition en frequencytables suivant les valeurs de traitement
-	tupleTableLoader.LoadBivariate(varAttribName, attribConcatName, &bivariateVarConcat);
+	//tupleTableLoader.LoadBivariate(varAttribName, attribConcatName, &bivariateVarConcat);
 
-	bivariateVarConcat.Write(std::cout);
+	//bivariateVarConcat.Write(std::cout);
 
 	// calculer les stats par attributs. stats d'interet : ensemble des valeurs
-	KWAttributeStats varStats;
-	InitAndComputeStats(varStats, *varAttrib, learningSpec, bivariateVarConcat);
-	const int nbVars = varStats.GetDescriptiveStats()->GetValueNumber();
+	// KWAttributeStats varStats;
+	// InitAndComputeStats(varStats, *varAttrib, learningSpec, multivariatevaruplift);
+	// const int nbVars = varStats.GetDescriptiveStats()->GetValueNumber();
 
 	// alimenter la FrequencyTable avec les valeurs calculees
-	KWFrequencyTable fTable;
-	fTable.SetFrequencyVectorNumber(nbVars);
+	//KWFrequencyTable fTable;
+	//fTable.SetFrequencyVectorNumber(nbVars);
 	//initialize FVectors
-	for (int i = 0; i < fTable.GetFrequencyVectorNumber(); i++)
+	/* for (int i = 0; i < fTable.GetFrequencyVectorNumber(); i++)
 	{
 		IntVector* const fVec = GetDenseVectorAt(fTable, i);
 		for (int j = 0; j < symbolsSeen.GetSize(); j++)
 		{
 			fVec->Add(0);
 		}
-	}
+	}*/
 
 	// boucle sur les tuples
-	ContinuousVector varsSeen;
+	/* ContinuousVector varsSeen;
 	for (int i = 0; i < bivariateVarConcat.GetSize(); i++)
 	{
 		// var
@@ -612,12 +641,12 @@ int main(int argc, char** argv)
 		GetDenseVectorAt(fTable, varIdx)->SetAt(symIdx, currTuple->GetFrequency());
 	}
 
-	fTable.Write(std::cout);
+	fTable.Write(std::cout);*/
 
 	// separation des donnees suivant les valeurs d'un attribut de type symbol
-	// auto const pivotAttrib = kwcDico->LookupAttribute(attribTraitementName);
+	// auto const pivotAttrib = kwcDico->LookupAttribute(attribTreatName);
 	// ObjectArray separateTables;
-	// SeparateWRTSymbolAttribute(multivariate, multivariate.LookupAttributeIndex(attribTraitementName), separateTables);
+	// SeparateWRTSymbolAttribute(multivariate, multivariate.LookupAttributeIndex(attribTreatName), separateTables);
 
 	// pour reference
 

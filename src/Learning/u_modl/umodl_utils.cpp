@@ -110,7 +110,7 @@ void BuildRecodingClass(const KWClassDomain* initialDomain, ObjectArray* const a
 	require(trainedClassDomain);
 
 	// keep a ref to the concat rule
-	KWDerivationRule* const concatRule = initialDomain->GetClassAt(0)->GetTailAttribute()->GetDerivationRule();
+	// KWDerivationRule* const concatRule = initialDomain->GetClassAt(0)->GetTailAttribute()->GetDerivationRule();
 
 	// initialiser recoding spec
 	KWAnalysisSpec analysisSpec;
@@ -321,7 +321,7 @@ void BuildRecodingClass(const KWClassDomain* initialDomain, ObjectArray* const a
 	// Transfert du domaine de preparation dans le domaine cible
 	trainedClassDomain->ImportDomain(preparedDomain, "R_", "");
 	// maj des regles de derivation
-	concatRule->SetClassName(trainedClassDomain->GetClassAt(0)->GetName());
+	// concatRule->SetClassName(trainedClassDomain->GetClassAt(0)->GetName());
 	delete preparedDomain;
 	dataPreparationClass.RemoveDataPreparation();
 	ensure(trainedClassDomain->Check());
