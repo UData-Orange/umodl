@@ -281,8 +281,8 @@ bool CheckAnalysableAttributes(UMODLCommandLine& commandLine, const ObjectArray&
 	IntVector toSuppress;
 	for (int i = 0; i < analysableAttribsInput.GetSize(); i++)
 	{
-		auto currAttrib = cast(KWAttribute*, analysableAttribsInput.GetAt(i));
-		auto attribStats = new KWAttributeStats;
+		const KWAttribute* const currAttrib = cast(KWAttribute*, analysableAttribsInput.GetAt(i));
+		KWAttributeStats* const attribStats = new KWAttributeStats;
 		if (not attribStats)
 		{
 			return false;
@@ -431,7 +431,7 @@ int main(int argc, char** argv)
 	kwcDico->Write(std::cout);
 	currentDomainPtr->Write(std::cout);
 
-	auto classptr = currentDomainPtr->GetClassAt(0);
+	const KWClass* const classptr = currentDomainPtr->GetClassAt(0);
 	classptr->GetTailAttribute()->GetDerivationRule()->Write(std::cout);
 	kwcDico->GetDomain()->Write(std::cout);
 
@@ -469,7 +469,7 @@ int main(int argc, char** argv)
 	KWDRRegisterDataGridRules();
 
 	const KWAttribute* const varAttrib = kwcDico->GetHeadAttribute();
-	const auto& varAttribName = varAttrib->GetName();
+	const ALString& varAttribName = varAttrib->GetName();
 
 	// creation du tupleLoader
 	KWTupleTableLoader tupleTableLoader;
@@ -552,7 +552,7 @@ int main(int argc, char** argv)
 
 		tupleTableLoader.LoadBivariate(attribName, attribConcatName, &bivariateVarConcat);
 
-		auto currStats = new KWAttributeStats;
+		KWAttributeStats* const currStats = new KWAttributeStats;
 		InitAndComputeStats(*currStats, *currAttrib, learningSpec, bivariateVarConcat);
 		attribStats.Add(currStats);
 
@@ -584,7 +584,7 @@ int main(int argc, char** argv)
 	//initialize FVectors
 	for (int i = 0; i < fTable.GetFrequencyVectorNumber(); i++)
 	{
-		auto const fVec = GetDenseVectorAt(fTable, i);
+		IntVector* const fVec = GetDenseVectorAt(fTable, i);
 		for (int j = 0; j < symbolsSeen.GetSize(); j++)
 		{
 			fVec->Add(0);
@@ -596,7 +596,7 @@ int main(int argc, char** argv)
 	for (int i = 0; i < bivariateVarConcat.GetSize(); i++)
 	{
 		// var
-		const auto currTuple = bivariateVarConcat.GetAt(i);
+		const KWTuple* const currTuple = bivariateVarConcat.GetAt(i);
 		const Continuous currVar = currTuple->GetContinuousAt(0);
 		const int varIdx = SearchContinuous(varsSeen, currVar);
 		if (varIdx == varsSeen.GetSize())

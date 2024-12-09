@@ -17,7 +17,7 @@ ALString PrepareName(const ALString& name)
 
 KWDerivationRuleOperand* MakeSymbolOperand(int origin)
 {
-	auto res = new KWDerivationRuleOperand;
+	KWDerivationRuleOperand* const res = new KWDerivationRuleOperand;
 	check(res);
 	res->SetType(KWType::Symbol);
 	res->SetOrigin(origin);
@@ -26,27 +26,27 @@ KWDerivationRuleOperand* MakeSymbolOperand(int origin)
 
 KWDerivationRuleOperand* MakeConcatOperand(const ALString& attribName)
 {
-	auto res = MakeSymbolOperand(KWDerivationRuleOperand::OriginAttribute);
+	KWDerivationRuleOperand* const res = MakeSymbolOperand(KWDerivationRuleOperand::OriginAttribute);
 	res->SetAttributeName(attribName);
 	return res;
 }
 
 KWDerivationRuleOperand* MakeSeparatorOperand()
 {
-	auto res = MakeSymbolOperand(KWDerivationRuleOperand::OriginConstant);
+	KWDerivationRuleOperand* const res = MakeSymbolOperand(KWDerivationRuleOperand::OriginConstant);
 	res->SetSymbolConstant("_");
 	return res;
 }
 
 bool InitConcatAttrib(KWAttribute& toInit, const ALString& attribOperand1, const ALString attribOperand2)
 {
-	auto sNameOperand1 = PrepareName(attribOperand1);
+	const ALString sNameOperand1 = PrepareName(attribOperand1);
 	if (sNameOperand1.IsEmpty())
 	{
 		toInit.AddError("Trimming of attribute name " + attribOperand1 + " returned an empty string.");
 		return false;
 	}
-	auto sNameOperand2 = PrepareName(attribOperand2);
+	const ALString sNameOperand2 = PrepareName(attribOperand2);
 	if (sNameOperand2.IsEmpty())
 	{
 		toInit.AddError("Trimming of attribute name " + attribOperand2 + " returned an empty string.");
@@ -55,7 +55,7 @@ bool InitConcatAttrib(KWAttribute& toInit, const ALString& attribOperand1, const
 	toInit.SetName(sNameOperand1 + "_" + sNameOperand2);
 
 	// add derivation rule
-	auto concatRule = new KWDRConcat;
+	KWDRConcat* const concatRule = new KWDRConcat;
 	check(concatRule);
 	concatRule->DeleteAllOperands();
 	concatRule->AddOperand(MakeConcatOperand(attribOperand1));
@@ -77,7 +77,7 @@ KWAttribute* MakeConcatenatedAttribute(KWClass& dico, const ALString& attribOper
 {
 	require(not attribOperand1.IsEmpty() and not attribOperand2.IsEmpty());
 
-	auto concatAttrib = new KWAttribute;
+	KWAttribute* const concatAttrib = new KWAttribute;
 	if (not concatAttrib)
 	{
 		return nullptr;
@@ -110,7 +110,7 @@ void BuildRecodingClass(const KWClassDomain* initialDomain, ObjectArray* const a
 	require(trainedClassDomain);
 
 	// keep a ref to the concat rule
-	auto const concatRule = initialDomain->GetClassAt(0)->GetTailAttribute()->GetDerivationRule();
+	KWDerivationRule* const concatRule = initialDomain->GetClassAt(0)->GetTailAttribute()->GetDerivationRule();
 
 	// initialiser recoding spec
 	KWAnalysisSpec analysisSpec;
