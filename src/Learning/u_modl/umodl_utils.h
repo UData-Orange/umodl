@@ -48,7 +48,7 @@ inline int GetValueNumber(KWAttributeStats& attStats)
 ////////////////////////////////////////////////////////////////////////
 // fonction d'aide a la creation d'un nouvel attribut de type categoriel
 // a partir de la concatenation de deux autres attributs categoriels
-KWAttribute* AddConcatenatedAttribute(KWClass& dico, const ALString& attribOperand1, const ALString attribOperand2);
+KWAttribute* MakeConcatenatedAttribute(KWClass& dico, const ALString& attribOperand1, const ALString attribOperand2);
 
 ////////////////////////////////////////////////////////////////////////
 // adaptation de BuildRecodingClass pour un parametre d'entree de type ObjectArray
