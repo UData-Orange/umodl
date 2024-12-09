@@ -73,7 +73,7 @@ bool InitConcatAttrib(KWAttribute& toInit, const ALString& attribOperand1, const
 	return true;
 }
 
-KWAttribute* AddConcatenatedAttribute(KWClass& dico, const ALString& attribOperand1, const ALString attribOperand2)
+KWAttribute* MakeConcatenatedAttribute(KWClass& dico, const ALString& attribOperand1, const ALString attribOperand2)
 {
 	require(not attribOperand1.IsEmpty() and not attribOperand2.IsEmpty());
 
@@ -90,7 +90,6 @@ KWAttribute* AddConcatenatedAttribute(KWClass& dico, const ALString& attribOpera
 	}
 
 	concatAttrib->CompleteTypeInfo(&dico);
-	dico.InsertAttribute(concatAttrib);
 	return concatAttrib;
 }
 

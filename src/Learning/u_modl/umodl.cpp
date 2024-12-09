@@ -25,6 +25,7 @@ public:
 	KWAttribute* m_attrib = nullptr;
 	KWSTDatabaseTextFile* m_readDatabase = nullptr;
 	ObjectArray* m_analysableAttributeStatsArr = nullptr;
+	KWClassDomain* m_domain = nullptr;
 
 	void operator()()
 	{
@@ -44,7 +45,6 @@ public:
 		}
 
 		KWClassDomain::GetCurrentDomain()->DeleteAllDomains();
-
 		// Nettoyage des taches
 		PLParallelTask::DeleteAllTasks();
 		// Nettoyage des methodes de pretraitement
@@ -317,10 +317,23 @@ bool CheckAnalysableAttributes(UMODLCommandLine& commandLine, const ObjectArray&
 	return true;
 }
 
-bool PrepareSupervisedStats(const ALString& attributeName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
-			    KWTupleTable& univariate)
+enum class StatPreparationMode
 {
-	learningSpec.SetTargetAttributeName(attributeName);
+	Unsupervised,
+	Supervised
+};
+
+bool PrepareStats(const ALString& attributeName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
+		  KWTupleTable& univariate, const StatPreparationMode mode)
+{
+	if (mode == StatPreparationMode::Supervised)
+	{
+		learningSpec.SetTargetAttributeName(attributeName);
+	}
+	else
+	{
+		learningSpec.SetTargetAttributeName("");
+	}
 	loader.LoadUnivariate(attributeName, &univariate);
 	return learningSpec.ComputeTargetStats(&univariate);
 }
@@ -379,7 +392,7 @@ int main(int argc, char** argv)
 	// attribTreatName et attribTargetName sont categoriels
 	// au moins un des autres attributs est numerique ou categoriel
 	ObjectArray analysableAttribs;
-	cleaner.m_analysableAttributeStatsArr = &analysableAttribs;
+
 	if (not CheckDictionnary(commandLine, *kwcDico, attribTreatName, attribTargetName, analysableAttribs))
 	{
 		commandLine.AddError("Loaded dictionnary cannot be analysed.");
@@ -392,7 +405,7 @@ int main(int argc, char** argv)
 	// de l'attribut avant la destruction de l'ensemble des regles de derivation
 	// TODO ajouter la ref de l'attribut dans une liste des attributs dont la regle
 	// de derivation doit etre liberee
-	KWAttribute* const attribConcat = AddConcatenatedAttribute(*kwcDico, attribTreatName, attribTargetName);
+	KWAttribute* const attribConcat = MakeConcatenatedAttribute(*kwcDico, attribTreatName, attribTargetName);
 	if (not attribConcat)
 	{
 		commandLine.AddError("Unable to create concatenated attribute.");
@@ -404,6 +417,7 @@ int main(int argc, char** argv)
 
 	const ALString& attribConcatName = attribConcat->GetName();
 
+	kwcDico->InsertAttribute(attribConcat);
 	if (not currentDomainPtr->Check())
 	{
 		commandLine.AddError("Domain is not consistent.");
@@ -472,8 +486,8 @@ int main(int argc, char** argv)
 	// - le traitement a au moins 2 valeurs distinctes
 	// - au moins un des attributs a analyser a au moins 2 valeurs distinctes
 	KWTupleTable univariate;
-	tupleTableLoader.LoadUnivariate(attribTargetName, &univariate);
-	if (not learningSpec.ComputeTargetStats(&univariate))
+	if (not PrepareStats(attribTargetName, learningSpec, tupleTableLoader, univariate,
+			     StatPreparationMode::Unsupervised))
 	{
 		commandLine.AddError("Unable to compute stats.");
 		cleaner();
@@ -507,7 +521,8 @@ int main(int argc, char** argv)
 	///////////////////////////////////////////////////////////////////////
 	// mode supervise
 
-	if (not PrepareSupervisedStats(attribConcatName, learningSpec, tupleTableLoader, univariate))
+	if (not PrepareStats(attribConcatName, learningSpec, tupleTableLoader, univariate,
+			     StatPreparationMode::Supervised))
 	{
 		commandLine.AddError("Failed to compute stats on concatenated attribute.");
 		cleaner();
