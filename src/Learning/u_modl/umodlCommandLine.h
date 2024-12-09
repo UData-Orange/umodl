@@ -25,6 +25,7 @@ public:
 		ALString className;
 		ALString attribTreatName;
 		ALString attribTargetName;
+		ALString outputFileName;
 	};
 
 	// Lancement depuis la ligne de commande
