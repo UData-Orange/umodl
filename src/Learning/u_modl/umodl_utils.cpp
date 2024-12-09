@@ -326,3 +326,12 @@ void BuildRecodingClass(const KWClassDomain* initialDomain, ObjectArray* const a
 	dataPreparationClass.RemoveDataPreparation();
 	ensure(trainedClassDomain->Check());
 }
+
+void InitAndComputeStats(KWAttributeStats& attribStats, const KWAttribute& attrib, KWLearningSpec& learningSpec,
+			 const KWTupleTable& tupleTable)
+{
+	attribStats.SetLearningSpec(&learningSpec);
+	attribStats.SetAttributeName(attrib.GetName());
+	attribStats.SetAttributeType(attrib.GetType());
+	attribStats.ComputeStats(&tupleTable);
+}

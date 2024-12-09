@@ -55,3 +55,6 @@ KWAttribute* MakeConcatenatedAttribute(KWClass& dico, const ALString& attribOper
 // parametre attribStats est un object array de KWAttributeStats
 void BuildRecodingClass(const KWClassDomain* initialDomain, ObjectArray* const attribStats,
 			KWClassDomain* const trainedClassDomain);
+
+void InitAndComputeStats(KWAttributeStats& attribStats, const KWAttribute& attrib, KWLearningSpec& learningSpec,
+			 const KWTupleTable& tupleTable);
