@@ -468,7 +468,8 @@ int main(int argc, char** argv)
 	// Enregistrement des regles liees aux datagrids
 	KWDRRegisterDataGridRules();
 
-	const auto& varAttribName = kwcDico->GetHeadAttribute()->GetName();
+	const KWAttribute* const varAttrib = kwcDico->GetHeadAttribute();
+	const auto& varAttribName = varAttrib->GetName();
 
 	// creation du tupleLoader
 	KWTupleTableLoader tupleTableLoader;
@@ -552,10 +553,7 @@ int main(int argc, char** argv)
 		tupleTableLoader.LoadBivariate(attribName, attribConcatName, &bivariateVarConcat);
 
 		auto currStats = new KWAttributeStats;
-		currStats->SetLearningSpec(&learningSpec);
-		currStats->SetAttributeName(attribName);
-		currStats->SetAttributeType(currAttrib->GetType());
-		currStats->ComputeStats(&bivariateVarConcat);
+		InitAndComputeStats(*currStats, *currAttrib, learningSpec, bivariateVarConcat);
 		attribStats.Add(currStats);
 
 		bivariateVarConcat.CleanAll();
@@ -577,10 +575,7 @@ int main(int argc, char** argv)
 
 	// calculer les stats par attributs. stats d'interet : ensemble des valeurs
 	KWAttributeStats varStats;
-	varStats.SetLearningSpec(&learningSpec);
-	varStats.SetAttributeName(varAttribName);
-	varStats.SetAttributeType(KWType::Continuous);
-	varStats.ComputeStats(&bivariateVarConcat);
+	InitAndComputeStats(varStats, *varAttrib, learningSpec, bivariateVarConcat);
 	const int nbVars = varStats.GetDescriptiveStats()->GetValueNumber();
 
 	// alimenter la FrequencyTable avec les valeurs calculees
