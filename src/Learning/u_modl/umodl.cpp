@@ -12,14 +12,15 @@
 #include "KWSTDatabase.h"
 #include "KWClassDomain.h"
 #include "KWSTDatabaseTextFile.h"
-#include "KWLearningSpec.h"
 #include "KWDataPreparationUnivariateTask.h"
 #include "KWDRDataGrid.h"
 #include "PLParallelTask.h"
+#include "UPLearningSpec.h"
 #include "UPDiscretizerUMODL.h"
+#include "UPAttributeStats.h"
 
-constexpr auto attribTraitementName = "TRAITEMENT";
-constexpr auto attribCibleName = "CIBLE";
+const ALString attribTraitementName = "TRAITEMENT";
+const ALString attribCibleName = "CIBLE";
 
 // // separation de tupletable en frequencytables selon les valeurs d'un attribut choisi
 // void SeparateWRTSymbolAttribute(const KWTupleTable& inputTable, const int attribIdx, ObjectArray& outputArray)
@@ -138,11 +139,12 @@ int main(int argc, char** argv)
 	// int nNumber;
 	// pour detecter l'allocation a la source de la non desallocation en mode debug
 	// mettre le numero de bloc non desaloue et mettre un poitn d'arret dans Standard.h ligne 686 exit(nExitCode);
-	// MemSetAllocIndexExit(5642);
+	//
+	//MemSetAllocIndexExit(6450);
 
 	//test avec paths codes en dur
-	const ALString sClassFileName = "D:/Users/cedric.lecam/Downloads/data1.kdic";
-	const ALString sReadFileName = "D:/Users/cedric.lecam/Downloads/data1.txt";
+	const ALString sClassFileName = "C:\\DEV\\dataumodl\\data1.kdic";
+	const ALString sReadFileName = "C:\\DEV\\dataumodl\\data1.txt";
 	const ALString sTestClassName = "data1";
 
 	// constexpr auto attribVarName = "VAR";
@@ -160,20 +162,20 @@ int main(int argc, char** argv)
 	// de l'attribut avant la destruction de l'ensemble des regles de derivation
 	// TODO ajouter la ref de l'attribut dans une liste des attributs dont la regle
 	// de derivation doit etre liberee
-	KWAttribute* const attribConcat = AddConcatenatedAttribute(*kwcDico, attribTraitementName, attribCibleName);
-	const ALString& attribConcatName = attribConcat->GetName();
+	//KWAttribute* const attribConcat = AddConcatenatedAttribute(*kwcDico, attribTraitementName, attribCibleName);
+	//const ALString& attribConcatName = attribConcat->GetName();
 
 	if (currentDomainPtr->Check())
 		currentDomainPtr->Compile();
 
-	kwcDico->Write(std::cout);
+	/* kwcDico->Write(std::cout);
 
 	currentDomainPtr->Write(std::cout);
 
 	auto classptr = currentDomainPtr->GetClassAt(0);
 	classptr->GetTailAttribute()->GetDerivationRule()->Write(std::cout);
 
-	kwcDico->GetDomain()->Write(std::cout);
+	kwcDico->GetDomain()->Write(std::cout);*/
 
 	std::cout << kwcDico->GetName() << '\n';
 	std::cout << "nombre attribut :" << kwcDico->GetAttributeNumber() << '\n';
@@ -187,7 +189,7 @@ int main(int argc, char** argv)
 	readDatabase.ReadAll();
 	std::cout << "GetExactObjectNumber :" << readDatabase.GetExactObjectNumber() << '\n';
 
-	KWDataPreparationUnivariateTask dataPreparationUnivariateTask;
+	//KWDataPreparationUnivariateTask dataPreparationUnivariateTask;
 
 	// Enregistrement des methodes de pretraitement supervisees et non supervisees
 	RegisterDiscretizers();
@@ -206,15 +208,27 @@ int main(int argc, char** argv)
 	tupleTableLoader.SetInputDatabaseObjects(readDatabase.GetObjects());
 
 	// creation de learninspec
-	KWLearningSpec learningSpec;
+	UPLearningSpec learningSpec;
 	learningSpec.GetPreprocessingSpec()->GetDiscretizerSpec()->SetSupervisedMethodName("UMODL");
 	learningSpec.SetClass(kwcDico);
 	learningSpec.SetDatabase(&readDatabase);
-	learningSpec.SetTargetAttributeName(attribConcatName);
+	learningSpec.SetTargetAttributeName(attribCibleName);
+	learningSpec.SetTreatementAttributeName(attribTraitementName);
 
-	// calcul des stats de base
+	//DDD
+	cout << "Initial learning spec: " << &learningSpec << endl;
+
+	// calcul des stats de base du traitement
 	KWTupleTable univariate;
-	tupleTableLoader.LoadUnivariate(attribConcatName, &univariate);
+	tupleTableLoader.LoadUnivariate(attribTraitementName, &univariate);
+
+	learningSpec.ComputeTreatementStats(&univariate);
+	cout << "nb valeur traitement : "
+	     << learningSpec.GetTreatementValueStats()->GetAttributeAt(0)->GetInitialValueNumber() << endl;
+
+	// calcul des stats de base de la cible
+
+	tupleTableLoader.LoadUnivariate(attribCibleName, &univariate);
 
 	// recuperer les valeurs de traitement_cible trouvees
 	SymbolVector symbolsSeen;
@@ -225,26 +239,44 @@ int main(int argc, char** argv)
 
 	learningSpec.ComputeTargetStats(&univariate);
 
+	//DDD
+	cout << "Initial learning spec 2: " << &learningSpec << " " << learningSpec.GetNullPreparationCost() << endl;
+	cout << "Initial learning spec 3: " << &learningSpec << " " << learningSpec.GetNullCost() << endl;
+
 	// accumulation des stats d'attribut par calcul supervise selon la cible concatenee
 	ObjectArray attribStats;
 
 	// tupletable des variables et de l'attribut concatene, avec attribut concatene pour cible
 	KWTupleTable bivariateVarConcat;
+	KWTupleTable multivariatevaruplift;
 
 	// boucle sur les attributs pour preparer les stats avant reconstruction du dictionnaire
-	for (KWAttribute* currAttrib = kwcDico->GetHeadAttribute(); currAttrib->GetName() != attribConcatName;
+	for (KWAttribute* currAttrib = kwcDico->GetHeadAttribute();
+	     currAttrib->GetName() != attribCibleName && currAttrib->GetName() != attribTraitementName;
 	     kwcDico->GetNextAttribute(currAttrib))
 	{
 		const ALString& attribName = currAttrib->GetName();
+		StringVector svAttributeNames;
+		svAttributeNames.Initialize();
+		//svAttributeNames.SetSize(3);
+		svAttributeNames.Add(attribName);
+		svAttributeNames.Add(attribCibleName);
+		svAttributeNames.Add(attribTraitementName);
 
-		tupleTableLoader.LoadBivariate(attribName, attribConcatName, &bivariateVarConcat);
+		svAttributeNames.GetSize();
+		//tupleTableLoader.LoadBivariate(attribName, attribTraitementName, &bivariateVarConcat);
+		tupleTableLoader.LoadMultivariate(&svAttributeNames, &bivariateVarConcat);
 
-		auto currStats = new KWAttributeStats;
+		auto currStats = new UPAttributeStats;
 		currStats->SetLearningSpec(&learningSpec);
 		currStats->SetAttributeName(attribName);
 		currStats->SetAttributeType(currAttrib->GetType());
 		currStats->ComputeStats(&bivariateVarConcat);
 		attribStats.Add(currStats);
+
+		//DDD
+		cout << "Attribute stats learning spec: " << currStats->GetLearningSpec() << " "
+		     << learningSpec.GetNullCost() << endl;
 
 		bivariateVarConcat.CleanAll();
 	}
@@ -254,38 +286,38 @@ int main(int argc, char** argv)
 	BuildRecodingClass(kwcDico->GetDomain(), &attribStats, &recodedDomain);
 
 	// TODO mettre le path dans un argument d'appel du programme
-	recodedDomain.WriteFile("D:/Users/cedric.lecam/Downloads/data1_recode");
+	recodedDomain.WriteFile("C:\\DEV\\dataumodl\\data1_recode.kdic");
 
 	attribStats.DeleteAll();
 
 	// test de repartition en frequencytables suivant les valeurs de traitement
-	tupleTableLoader.LoadBivariate(varAttribName, attribConcatName, &bivariateVarConcat);
+	//tupleTableLoader.LoadBivariate(varAttribName, attribConcatName, &bivariateVarConcat);
 
-	bivariateVarConcat.Write(std::cout);
+	//bivariateVarConcat.Write(std::cout);
 
 	// calculer les stats par attributs. stats d'interet : ensemble des valeurs
-	KWAttributeStats varStats;
-	varStats.SetLearningSpec(&learningSpec);
-	varStats.SetAttributeName(varAttribName);
-	varStats.SetAttributeType(KWType::Continuous);
-	varStats.ComputeStats(&bivariateVarConcat);
-	const int nbVars = varStats.GetDescriptiveStats()->GetValueNumber();
+	//UPAttributeStats varStats;
+	//varStats.SetLearningSpec(&learningSpec);
+	//varStats.SetAttributeName(varAttribName);
+	//varStats.SetAttributeType(KWType::Continuous);
+	//varStats.ComputeStats(&bivariateVarConcat);
+	//const int nbVars = varStats.GetDescriptiveStats()->GetValueNumber();
 
 	// alimenter la FrequencyTable avec les valeurs calculees
-	KWFrequencyTable fTable;
-	fTable.SetFrequencyVectorNumber(nbVars);
+	//KWFrequencyTable fTable;
+	//fTable.SetFrequencyVectorNumber(nbVars);
 	//initialize FVectors
-	for (int i = 0; i < fTable.GetFrequencyVectorNumber(); i++)
+	/* for (int i = 0; i < fTable.GetFrequencyVectorNumber(); i++)
 	{
 		auto const fVec = GetDenseVectorAt(fTable, i);
 		for (int j = 0; j < symbolsSeen.GetSize(); j++)
 		{
 			fVec->Add(0);
 		}
-	}
+	}*/
 
 	// boucle sur les tuples
-	ContinuousVector varsSeen;
+	/* ContinuousVector varsSeen;
 	for (int i = 0; i < bivariateVarConcat.GetSize(); i++)
 	{
 		// var
@@ -305,7 +337,7 @@ int main(int argc, char** argv)
 		GetDenseVectorAt(fTable, varIdx)->SetAt(symIdx, currTuple->GetFrequency());
 	}
 
-	fTable.Write(std::cout);
+	fTable.Write(std::cout);*/
 
 	// separation des donnees suivant les valeurs d'un attribut de type symbol
 	// auto const pivotAttrib = kwcDico->LookupAttribute(attribTraitementName);
@@ -351,7 +383,7 @@ int main(int argc, char** argv)
 	// comme il y a d'autres DerivationRules a liberer, celle de l'attribut doit etre dissociee
 	// de celui-ci pour eviter d'acceder a de la memoire deja liberee pendant la suppression de
 	// toutes les regles du meme coup
-	attribConcat->RemoveDerivationRule();
+	//attribConcat->RemoveDerivationRule();
 	KWClassDomain::GetCurrentDomain()->DeleteAllDomains();
 	// Nettoyage des taches
 	PLParallelTask::DeleteAllTasks();
