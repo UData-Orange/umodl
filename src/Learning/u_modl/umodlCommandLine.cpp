@@ -1084,7 +1084,7 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 	}
 
 	// Test du bon nombre d'options
-	if (argc != 6)
+	if (argc != 7)
 	{
 		const ALString& classLabel = GetClassLabel();
 		ALString errMsg =
@@ -1120,10 +1120,17 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 	res.className = argv[3];
 	res.attribTreatName = argv[4];
 	res.attribTargetName = argv[5];
-	if (res.dataFileName == res.domainFileName)
+	res.outputFileName = argv[6];
+	if (res.dataFileName == res.domainFileName or res.dataFileName == res.outputFileName or
+	    res.domainFileName == res.outputFileName)
 	{
-		std::cout << "Result file name must be different from input values file name (" << res.dataFileName
-			  << ")\n";
+		std::cout << "All file names must be different.\n";
+		return false;
+	}
+
+	if (res.attribTreatName == res.attribTargetName)
+	{
+		std::cout << "Treatment and Target attributes must be different.\n";
 		return false;
 	}
 	return true;
@@ -1131,7 +1138,7 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 
 void UMODLCommandLine::ShowHelp()
 {
-	cout << "Usage: " << GetClassLabel() << " [VALUES] [DICTIONNARY] [CLASS] [TREATMENT] [TARGET]\n ";
+	cout << "Usage: " << GetClassLabel() << " [VALUES] [DICTIONNARY] [CLASS] [TREATMENT] [TARGET] [OUTPUT]\n ";
 	// cout << "Compute histogram from the data in FILE.\n";
 	// cout << " The resulting histogram is output in HISTOGRAM file, with the lower bound, upper bound,\n";
 	// cout << "  length, frequency, probability and density per bin.\n ";

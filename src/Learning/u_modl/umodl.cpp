@@ -362,6 +362,7 @@ int main(int argc, char** argv)
 	const ALString& sClassName = args.className;
 	const ALString& attribTreatName = args.attribTreatName;
 	const ALString& attribTargetName = args.attribTargetName;
+	const ALString& outputFileName = args.outputFileName;
 
 	//test avec paths codes en dur
 	// const ALString sClassFileName = "D:/Users/cedric.lecam/Downloads/data1.kdic";
@@ -564,8 +565,8 @@ int main(int argc, char** argv)
 	KWClassDomain recodedDomain;
 	BuildRecodingClass(kwcDico->GetDomain(), &attribStats, &recodedDomain);
 
-	// TODO mettre le path dans un argument d'appel du programme
-	recodedDomain.WriteFile("D:/Users/cedric.lecam/Downloads/data1_recode");
+	// sauvegarde dans un fichier
+	recodedDomain.WriteFile(outputFileName);
 
 	attribStats.DeleteAll();
 
