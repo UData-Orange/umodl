@@ -992,7 +992,8 @@ void KWDataGridStats::WriteJSONFields(JSONFile* fJSON)
 	int nCellId;
 	ALString sTmp;
 
-	require(GetTargetAttributeNumber() == 1 or GetTargetAttributeNumber() == GetAttributeNumber());
+	require(GetTargetAttributeNumber() == 1 or GetTargetAttributeNumber() == 2 or
+		GetTargetAttributeNumber() == GetAttributeNumber());
 	require(cvJSONAttributeDomainLowerBounds != NULL and cvJSONAttributeDomainUpperBounds != NULL);
 	require(cvJSONAttributeDomainLowerBounds->GetSize() == cvJSONAttributeDomainUpperBounds->GetSize());
 	require(cvJSONAttributeDomainLowerBounds->GetSize() == GetAttributeNumber());

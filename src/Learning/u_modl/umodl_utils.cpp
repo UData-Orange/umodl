@@ -338,7 +338,20 @@ void InitAndComputeStats(KWAttributeStats& attribStats, const KWAttribute& attri
 	attribStats.ComputeStats(&tupleTable);
 }
 
-void WriteJSONReport(const UPLearningSpec& learningSpec, const ObjectArray& attribStats)
+void WriteDictionnary(JSONFile& file, const ALString& key, const ObjectArray& attribsUpliftStats, const bool summary)
+{
+	file.BeginKeyArray(key);
+	for (int i = 0; i < attribsUpliftStats.GetSize(); i++)
+	{
+		UPAttributeStats* currAttribStats = cast(UPAttributeStats*, attribsUpliftStats.GetAt(i));
+		file.BeginKeyObject(currAttribStats->GetIdentifier());
+		currAttribStats->WriteJSONArrayFields(&file, summary);
+		file.EndObject();
+	}
+	file.EndArray();
+}
+
+void WriteJSONReport(const UPLearningSpec& learningSpec, ObjectArray& attribStats)
 {
 	// ouvre un fichier JSON
 	JSONFile fJSON;
@@ -368,27 +381,15 @@ void WriteJSONReport(const UPLearningSpec& learningSpec, const ObjectArray& attr
 		// algorithmes utilises
 		fJSON.WriteKeyString("discretization", "UMODL");
 
-		// rapports synthetiques
-		fJSON.BeginKeyArray("attributes");
-		for (int i = 0; i < attribStats.GetSize(); i++)
-		{
-			UPAttributeStats* currAttribStats = cast(UPAttributeStats*, attribStats.GetAt(i));
-			fJSON.BeginKeyObject(currAttribStats->GetAttributeName());
-			currAttribStats->WriteJSONArrayFields(&fJSON, true);
-			fJSON.EndObject();
-		}
-		fJSON.EndArray();
+		// calcul des identifiants bases sur les rangs
+		UPAttributeStats* instance = cast(UPAttributeStats*, attribStats.GetAt(0));
+		instance->ComputeRankIdentifiers(&attribStats);
 
-		// // rapports detailles
-		// fJSON.BeginKeyArray("detailed statistics");
-		// for (int i = 0; i < attribStats.GetSize(); i++)
-		// {
-		// 	UPAttributeStats* currAttribStats = cast(UPAttributeStats*, attribStats.GetAt(i));
-		// 	fJSON.BeginKeyObject(currAttribStats->GetAttributeName());
-		// 	currAttribStats->WriteJSONArrayFields(&fJSON, false);
-		// 	fJSON.EndObject();
-		// }
-		// fJSON.EndArray();
+		// rapports synthetiques
+		WriteDictionnary(fJSON, "attributes", attribStats, true);
+
+		// rapports detailles
+		WriteDictionnary(fJSON, "detailed statistics", attribStats, false);
 	}
 
 	fJSON.Close();
