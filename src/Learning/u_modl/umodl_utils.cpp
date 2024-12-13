@@ -4,8 +4,10 @@
 
 #include "umodl_utils.h"
 
+#include "JSONFile.h"
 #include "KWAnalysisSpec.h"
 #include "KWDRString.h"
+#include "UPAttributeStats.h"
 #include "UPDataPreparationClass.h"
 
 ALString PrepareName(const ALString& name)
@@ -334,4 +336,60 @@ void InitAndComputeStats(KWAttributeStats& attribStats, const KWAttribute& attri
 	attribStats.SetAttributeName(attrib.GetName());
 	attribStats.SetAttributeType(attrib.GetType());
 	attribStats.ComputeStats(&tupleTable);
+}
+
+void WriteJSONReport(const UPLearningSpec& learningSpec, const ObjectArray& attribStats)
+{
+	// ouvre un fichier JSON
+	JSONFile fJSON;
+
+	ALString sJSONReportName = "./reportfilepath.json";
+	fJSON.SetFileName(sJSONReportName);
+	fJSON.OpenForWrite();
+
+	if (fJSON.IsOpened())
+	{
+		// Outil et version
+		fJSON.WriteKeyString("tool", "UMODL");
+		fJSON.WriteKeyString("version", "V0");
+
+		// rapport de preparation minimaliste : seulement les specifications d'apprentissage
+
+		learningSpec.GetTargetDescriptiveStats()->WriteJSONKeyReport(&fJSON, "targetDescriptiveStats");
+		learningSpec.GetTargetValueStats()->WriteJSONKeyValueFrequencies(&fJSON, "targetValues");
+		learningSpec.GetTreatementDescriptiveStats()->WriteJSONKeyReport(&fJSON, "treatmentDescriptiveStats");
+		learningSpec.GetTreatementValueStats()->WriteJSONKeyValueFrequencies(&fJSON, "treatmentValues");
+
+		const int attribSize = attribStats.GetSize();
+
+		// nombre de variables evaluees
+		fJSON.WriteKeyInt("evaluatedVariables", attribSize);
+
+		// algorithmes utilises
+		fJSON.WriteKeyString("discretization", "UMODL");
+
+		// rapports synthetiques
+		fJSON.BeginKeyArray("attributes");
+		for (int i = 0; i < attribStats.GetSize(); i++)
+		{
+			UPAttributeStats* currAttribStats = cast(UPAttributeStats*, attribStats.GetAt(i));
+			fJSON.BeginKeyObject(currAttribStats->GetAttributeName());
+			currAttribStats->WriteJSONArrayFields(&fJSON, true);
+			fJSON.EndObject();
+		}
+		fJSON.EndArray();
+
+		// // rapports detailles
+		// fJSON.BeginKeyArray("detailed statistics");
+		// for (int i = 0; i < attribStats.GetSize(); i++)
+		// {
+		// 	UPAttributeStats* currAttribStats = cast(UPAttributeStats*, attribStats.GetAt(i));
+		// 	fJSON.BeginKeyObject(currAttribStats->GetAttributeName());
+		// 	currAttribStats->WriteJSONArrayFields(&fJSON, false);
+		// 	fJSON.EndObject();
+		// }
+		// fJSON.EndArray();
+	}
+
+	fJSON.Close();
 }

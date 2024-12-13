@@ -561,19 +561,21 @@ int main(int argc, char** argv)
 	KWTupleTable multivariatevaruplift;
 
 	// boucle sur les attributs pour preparer les stats avant reconstruction du dictionnaire
-	for (KWAttribute* currAttrib = kwcDico->GetHeadAttribute();
-	     currAttrib->GetName() != attribTargetName && currAttrib->GetName() != attribTreatName;
-	     kwcDico->GetNextAttribute(currAttrib))
+	StringVector svAttributeNames;
+	svAttributeNames.Initialize();
+	svAttributeNames.SetSize(3);
+	svAttributeNames.SetAt(1, attribTargetName);
+	svAttributeNames.SetAt(2, attribTreatName);
+	for (KWAttribute* currAttrib = kwcDico->GetHeadAttribute(); currAttrib; kwcDico->GetNextAttribute(currAttrib))
 	{
 		const ALString& attribName = currAttrib->GetName();
-		StringVector svAttributeNames;
-		svAttributeNames.Initialize();
-		//svAttributeNames.SetSize(3);
-		svAttributeNames.Add(attribName);
-		svAttributeNames.Add(attribTargetName);
-		svAttributeNames.Add(attribTreatName);
+		if (attribName == attribTargetName or attribName == attribTreatName or not currAttrib->GetUsed())
+		{
+			continue;
+		}
 
-		svAttributeNames.GetSize();
+		svAttributeNames.SetAt(0, attribName);
+
 		//tupleTableLoader.LoadBivariate(attribName, attribTreatName, &bivariateVarConcat);
 		tupleTableLoader.LoadMultivariate(&svAttributeNames, &multivariatevaruplift);
 
@@ -587,6 +589,8 @@ int main(int argc, char** argv)
 
 		bivariateVarConcat.CleanAll();
 	}
+
+	WriteJSONReport(learningSpec, attribStats);
 
 	// reconstruction du dictionnaire, avec stats
 	KWClassDomain recodedDomain;
