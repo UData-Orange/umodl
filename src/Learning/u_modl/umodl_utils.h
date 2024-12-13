@@ -8,6 +8,7 @@
 #include "KWContinuous.h"
 #include "KWFrequencyVector.h"
 #include "KWSymbol.h"
+#include "UPLearningSpec.h"
 
 inline int SearchSymbol(const SymbolVector& sv, const Symbol& s)
 {
@@ -58,3 +59,6 @@ void BuildRecodingClass(const KWClassDomain* initialDomain, ObjectArray* const a
 
 void InitAndComputeStats(KWAttributeStats& attribStats, const KWAttribute& attrib, KWLearningSpec& learningSpec,
 			 const KWTupleTable& tupleTable);
+
+////////////////////////////////////////////////////////////////////////
+void WriteJSONReport(const UPLearningSpec& learningSpec, const ObjectArray& attribStats);

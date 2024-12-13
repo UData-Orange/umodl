@@ -448,8 +448,8 @@ void UPAttributeStats::WriteJSONArrayFields(JSONFile* fJSON, boolean bSummary)
 		{
 			if (GetPreparedDataGridStats() != NULL)
 			{
-				assert(GetPreparedDataGridStats()->GetAttributeNumber() <= 2);
-				assert(GetPreparedDataGridStats()->GetAttributeNumber() >= 1);
+				assert(GetPreparedDataGridStats()->GetAttributeNumber() <= 3);
+				assert(GetPreparedDataGridStats()->GetAttributeNumber() >= 2);
 
 				// Recherche des index des attributs sources et cibles
 				// La grille peut ne comporter que l'attribut cible
