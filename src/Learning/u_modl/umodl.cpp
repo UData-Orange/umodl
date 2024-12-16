@@ -18,6 +18,7 @@
 #include "umodlCommandLine.h"
 #include "UPLearningSpec.h"
 #include "UPDiscretizerUMODL.h"
+#include "UPGrouperUMODL.h"
 #include "UPAttributeStats.h"
 
 class Cleaner
@@ -131,6 +132,7 @@ void RegisterDiscretizers()
 	KWDiscretizer::RegisterDiscretizer(KWType::None, new KWDiscretizerEqualWidth);
 	KWDiscretizer::RegisterDiscretizer(KWType::None, new KWDiscretizerEqualFrequency);
 	KWGrouper::RegisterGrouper(KWType::Symbol, new KWGrouperMODL);
+	KWGrouper::RegisterGrouper(KWType::Symbol, new UPGrouperUMODL);
 	KWGrouper::RegisterGrouper(KWType::Symbol, new KWGrouperBasicGrouping);
 	KWGrouper::RegisterGrouper(KWType::Symbol, new KWGrouperMODLBasic);
 	KWGrouper::RegisterGrouper(KWType::None, new KWGrouperBasicGrouping);
