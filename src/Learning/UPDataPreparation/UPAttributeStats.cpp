@@ -1478,6 +1478,11 @@ void UPAttributeStats::BuildPreparedDiscretizationDataGridStats(const KWTupleTab
 		preparedDataGridStats->CreateAllCells();
 		ivPartIndexes.SetSize(3);
 
+		const UPLearningSpec* const upLearningSpec = cast(UPLearningSpec*, learningSpec);
+		const int targetNumber = upLearningSpec->GetTargetValueStats()->GetAttributeAt(0)->GetPartNumber();
+		const int treatmentNumber =
+		    upLearningSpec->GetTreatementValueStats()->GetAttributeAt(0)->GetPartNumber();
+
 		for (nSource = 0; nSource < kwftDiscretizedTable->GetFrequencyVectorNumber(); nSource++)
 		{
 			// Acces au vecteur du partile (sense etre en representation dense)
@@ -1485,8 +1490,8 @@ void UPAttributeStats::BuildPreparedDiscretizationDataGridStats(const KWTupleTab
 			    cast(KWDenseFrequencyVector*, kwftDiscretizedTable->GetFrequencyVectorAt(nSource));
 			ivSourceFrequencies = kwdfvSourceFrequencyVector->GetFrequencyVector();
 
-			for (nTarget = 0; nTarget < 2; nTarget++)
-				for (nTreatement = 0; nTreatement < 2; nTreatement++)
+			for (nTarget = 0; nTarget < targetNumber; nTarget++)
+				for (nTreatement = 0; nTreatement < treatmentNumber; nTreatement++)
 				//kwftDiscretizedTable->GetFrequencyVectorSize(); nTarget++)
 				{
 					//preparedDataGridStats->SetBivariateCellFrequencyAt(
