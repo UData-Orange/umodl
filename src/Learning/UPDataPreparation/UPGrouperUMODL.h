@@ -9,9 +9,11 @@
 class UPGrouperUMODL : public KWGrouperMODL
 {
 public:
+	UPGrouperUMODL();
+
 	// Nom de l'algorithme
-	const ALString GetName() const override
-	{
-		return "UMDOL";
-	}
+	const ALString GetName() const override;
+
+	// Constructeur generique
+	KWGrouper* Create() const override;
 };
