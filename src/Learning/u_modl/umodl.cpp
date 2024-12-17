@@ -366,6 +366,7 @@ int main(int argc, char** argv)
 	const ALString& attribTreatName = args.attribTreatName;
 	const ALString& attribTargetName = args.attribTargetName;
 	const ALString& outputFileName = args.outputFileName;
+	const ALString& reportJSONFileName = args.reportJSONFileName;
 
 	//test avec paths codes en dur
 	// const ALString sClassFileName = "D:/Users/cedric.lecam/Downloads/data1.kdic";
@@ -592,7 +593,7 @@ int main(int argc, char** argv)
 		bivariateVarConcat.CleanAll();
 	}
 
-	WriteJSONReport(learningSpec, attribStats);
+	WriteJSONReport(reportJSONFileName, learningSpec, attribStats);
 
 	// reconstruction du dictionnaire, avec stats
 	KWClassDomain recodedDomain;

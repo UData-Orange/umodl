@@ -351,12 +351,11 @@ void WriteDictionnary(JSONFile& file, const ALString& key, const ObjectArray& at
 	file.EndArray();
 }
 
-void WriteJSONReport(const UPLearningSpec& learningSpec, ObjectArray& attribStats)
+void WriteJSONReport(const ALString& sJSONReportName, const UPLearningSpec& learningSpec, ObjectArray& attribStats)
 {
 	// ouvre un fichier JSON
 	JSONFile fJSON;
 
-	ALString sJSONReportName = "./reportfilepath.json";
 	fJSON.SetFileName(sJSONReportName);
 	fJSON.OpenForWrite();
 
