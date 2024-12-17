@@ -382,13 +382,14 @@ void WriteJSONReport(const ALString& sJSONReportName, const UPLearningSpec& lear
 
 		// calcul des identifiants bases sur les rangs
 		UPAttributeStats* instance = cast(UPAttributeStats*, attribStats.GetAt(0));
+
 		instance->ComputeRankIdentifiers(&attribStats);
 
 		// rapports synthetiques
-		WriteDictionnary(fJSON, "attributes", attribStats, true);
+		instance->WriteJSONArrayReport(&fJSON, "attributes", &attribStats, true);
 
 		// rapports detailles
-		WriteDictionnary(fJSON, "detailed statistics", attribStats, false);
+		instance->WriteJSONArrayReport(&fJSON, "detailed statistics", &attribStats, false);
 	}
 
 	fJSON.Close();
