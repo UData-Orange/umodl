@@ -26,6 +26,7 @@ public:
 		ALString attribTreatName;
 		ALString attribTargetName;
 		ALString outputFileName;
+		ALString reportJSONFileName;
 	};
 
 	// Lancement depuis la ligne de commande

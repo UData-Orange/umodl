@@ -61,4 +61,4 @@ void InitAndComputeStats(KWAttributeStats& attribStats, const KWAttribute& attri
 			 const KWTupleTable& tupleTable);
 
 ////////////////////////////////////////////////////////////////////////
-void WriteJSONReport(const UPLearningSpec& learningSpec, ObjectArray& attribStats);
+void WriteJSONReport(const ALString& sJSONReportName, const UPLearningSpec& learningSpec, ObjectArray& attribStats);

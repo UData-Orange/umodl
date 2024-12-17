@@ -1084,7 +1084,7 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 	}
 
 	// Test du bon nombre d'options
-	if (argc != 7)
+	if (argc != 7 and argc != 8)
 	{
 		const ALString& classLabel = GetClassLabel();
 		ALString errMsg =
@@ -1133,6 +1133,35 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 		std::cout << "Treatment and Target attributes must be different.\n";
 		return false;
 	}
+
+	// preparation du nom de fichier pour le rapport json
+	ALString& reportFileNameToCheck = (argc == 8) ? res.reportJSONFileName : res.domainFileName;
+	if (argc == 8)
+	{
+		res.reportJSONFileName = argv[7];
+	}
+	//verification de l'extension
+	const int extPos = reportFileNameToCheck.ReverseFind('.');
+	if (extPos <= 0)
+	{
+		AddError("Cannot create JSON report, filename without consistent extension.");
+		return false;
+	}
+	// verification de l'extension : .json attendu si nom de fichier en argument,
+	// .kdic pour le dictionnaire si pas de nom de fichier pour le rapport
+	const ALString fileExt = reportFileNameToCheck.Right(reportFileNameToCheck.GetLength() - extPos);
+	if ((&reportFileNameToCheck == &(res.domainFileName) and fileExt != ".kdic") or
+	    (&reportFileNameToCheck == &(res.reportJSONFileName) and fileExt != ".json"))
+	{
+		AddError("Cannot create JSON report, inconsistent file extension.");
+		return false;
+	}
+	// modification du nom si pas d'argument pour le nom du fichier de rapport
+	if (argc == 7)
+	{
+		res.reportJSONFileName = res.domainFileName.Left(extPos) + ".json";
+	}
+
 	return true;
 }
 
