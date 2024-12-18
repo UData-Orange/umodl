@@ -149,11 +149,10 @@ int main(int argc, char** argv)
 	cout << "Initial learning spec 2: " << &learningSpec << " " << learningSpec.GetNullPreparationCost() << endl;
 	cout << "Initial learning spec 3: " << &learningSpec << " " << learningSpec.GetNullCost() << endl;
 
-	// accumulation des stats d'attribut par calcul supervise selon la cible concatenee
+	// accumulation des stats d'attribut par calcul supervise selon le traitement et la cible
 	ObjectArray attribStats;
 
-	// tupletable des variables et de l'attribut concatene, avec attribut concatene pour cible
-	KWTupleTable bivariateVarConcat;
+	// tupletable des variables et des attributs traitement et cible
 	KWTupleTable multivariatevaruplift;
 
 	// boucle sur les attributs pour preparer les stats avant reconstruction du dictionnaire
@@ -182,8 +181,6 @@ int main(int argc, char** argv)
 		//DDD
 		cout << "Attribute stats learning spec: " << currStats->GetLearningSpec() << " "
 		     << learningSpec.GetNullCost() << endl;
-
-		bivariateVarConcat.CleanAll();
 	}
 
 	WriteJSONReport(reportJSONFileName, learningSpec, attribStats);
