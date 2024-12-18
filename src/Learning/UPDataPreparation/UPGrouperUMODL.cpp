@@ -13,7 +13,7 @@ UPGrouperUMODL::UPGrouperUMODL()
 
 const ALString UPGrouperUMODL::GetName() const
 {
-	return "UMDOL";
+	return "UMODL";
 }
 
 KWGrouper* UPGrouperUMODL::Create() const
