@@ -6,9 +6,15 @@
 
 #include "JSONFile.h"
 #include "KWAnalysisSpec.h"
+#include "KWDataPreparationUnivariateTask.h"
+#include "KWDiscretizer.h"
+#include "KWDiscretizerUnsupervised.h"
 #include "KWDRString.h"
+#include "MHDiscretizerTruncationMODLHistogram.h"
 #include "UPAttributeStats.h"
 #include "UPDataPreparationClass.h"
+#include "UPDiscretizerUMODL.h"
+#include "UPGrouperUMODL.h"
 
 ALString PrepareName(const ALString& name)
 {
@@ -329,14 +335,23 @@ void BuildRecodingClass(const KWClassDomain* initialDomain, ObjectArray* const a
 	ensure(trainedClassDomain->Check());
 }
 
-void InitAndComputeStats(KWAttributeStats& attribStats, const KWAttribute& attrib, KWLearningSpec& learningSpec,
-			 const KWTupleTable& tupleTable)
+void InitAndComputeAttributeStats(KWAttributeStats& stats, const ALString& name, const int type,
+				  KWLearningSpec& learningSpec, const KWTupleTable& table)
 {
-	attribStats.SetLearningSpec(&learningSpec);
-	attribStats.SetAttributeName(attrib.GetName());
-	attribStats.SetAttributeType(attrib.GetType());
-	attribStats.ComputeStats(&tupleTable);
+	stats.SetLearningSpec(&learningSpec);
+	stats.SetAttributeName(name);
+	stats.SetAttributeType(type);
+	stats.ComputeStats(&table);
 }
+
+// void InitAndComputeStats(KWAttributeStats& attribStats, const KWAttribute& attrib, KWLearningSpec& learningSpec,
+// 			 const KWTupleTable& tupleTable)
+// {
+// 	attribStats.SetLearningSpec(&learningSpec);
+// 	attribStats.SetAttributeName(attrib.GetName());
+// 	attribStats.SetAttributeType(attrib.GetType());
+// 	attribStats.ComputeStats(&tupleTable);
+// }
 
 void WriteDictionnary(JSONFile& file, const ALString& key, const ObjectArray& attribsUpliftStats, const bool summary)
 {
@@ -349,6 +364,166 @@ void WriteDictionnary(JSONFile& file, const ALString& key, const ObjectArray& at
 		file.EndObject();
 	}
 	file.EndArray();
+}
+
+bool CheckDictionnary(UMODLCommandLine& commandLine, const KWClass& dico, const ALString& attribTreatName,
+		      const ALString& attribTargetName, ObjectArray& analysableAttribs)
+{
+	require(analysableAttribs.GetSize() == 0);
+	require(not attribTreatName.IsEmpty());
+	require(not attribTargetName.IsEmpty());
+
+	// au moins 3 attributs
+	if (dico.GetAttributeNumber() < 3)
+	{
+		commandLine.AddError("Dictionnary contains less than 3 attributes.");
+		return false;
+	}
+
+	// attribTreatName et attribTargetName doivent faire partie des attributs
+	// attribTreatName et attribTargetName doivent etre categoriels
+	// au moins un des autres attributs est numerique ou categoriel
+
+	bool hasTreat = false;
+	bool hasTarget = false;
+
+	for (KWAttribute* currAttrib = dico.GetHeadAttribute(); currAttrib; dico.GetNextAttribute(currAttrib))
+	{
+		const ALString& name = currAttrib->GetName();
+		const int currType = currAttrib->GetType();
+
+		const bool isSymbol = currType == KWType::Symbol;
+
+		if (not hasTreat or not hasTarget and isSymbol)
+		{
+			if (name == attribTreatName)
+			{
+				hasTreat = true;
+			}
+			else if (name == attribTargetName)
+			{
+				hasTarget = true;
+			}
+			else
+			{
+				analysableAttribs.Add(currAttrib);
+			}
+		}
+		else if (isSymbol or currType == KWType::Continuous)
+		{
+			analysableAttribs.Add(currAttrib);
+		}
+	}
+
+	bool res = true;
+
+	if (analysableAttribs.GetSize() == 0)
+	{
+		commandLine.AddError("Dictionnary does not contain an attribute to be analyzed.");
+		res = false;
+	}
+
+	if (not hasTreat)
+	{
+		commandLine.AddError("Dictionnary does not contain treatment attribute: " + attribTreatName);
+		res = false;
+	}
+
+	if (not hasTarget)
+	{
+		commandLine.AddError("Dictionnary does not contain target attribute: " + attribTargetName);
+		res = false;
+	}
+
+	return res;
+}
+
+bool CheckTreatmentAndTarget(UMODLCommandLine& commandLine, KWAttributeStats& treatStats,
+			     const ALString& attribTreatName, KWAttributeStats& targetStats,
+			     const ALString& attribTargetName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
+			     KWTupleTable& univariate)
+{
+	loader.LoadUnivariate(attribTargetName, &univariate);
+	InitAndComputeAttributeStats(targetStats, attribTargetName, KWType::Symbol, learningSpec, univariate);
+
+	if (GetValueNumber(targetStats) != 2)
+	{
+		commandLine.AddError("Target attribute does not have 2 distinct values, unable to analyse.");
+		return false;
+	}
+
+	loader.LoadUnivariate(attribTreatName, &univariate);
+	InitAndComputeAttributeStats(treatStats, attribTreatName, KWType::Symbol, learningSpec, univariate);
+
+	if (GetValueNumber(treatStats) < 2)
+	{
+		commandLine.AddError(
+		    "Treatment attribute does not have at least 2 two distinct values, unable to analyse.");
+		return false;
+	}
+
+	return true;
+}
+
+bool CheckAnalysableAttributes(UMODLCommandLine& commandLine, const ObjectArray& analysableAttribsInput,
+			       ObjectArray& analysableAttributeStatsArrOutput, KWLearningSpec& learningSpec,
+			       KWTupleTableLoader& loader, KWTupleTable& univariate)
+{
+	require(analysableAttribsInput.GetSize() > 0);
+	require(analysableAttributeStatsArrOutput.GetSize() == 0);
+
+	IntVector toSuppress;
+	for (int i = 0; i < analysableAttribsInput.GetSize(); i++)
+	{
+		const KWAttribute* const currAttrib = cast(KWAttribute*, analysableAttribsInput.GetAt(i));
+		KWAttributeStats* const attribStats = new KWAttributeStats;
+		if (not attribStats)
+		{
+			return false;
+		}
+
+		loader.LoadUnivariate(currAttrib->GetName(), &univariate);
+		InitAndComputeAttributeStats(*attribStats, currAttrib->GetName(), currAttrib->GetType(), learningSpec,
+					     univariate);
+
+		if (GetValueNumber(*attribStats) > 1)
+		{
+			analysableAttributeStatsArrOutput.Add(attribStats);
+		}
+		else
+		{
+			toSuppress.Add(i);
+			delete attribStats;
+		}
+	}
+	for (int i = 0; i < toSuppress.GetSize(); i++)
+	{
+		analysableAttributeStatsArrOutput.RemoveAt(toSuppress.GetAt(i));
+	}
+
+	// verifier qu'il y a bien au moins un attribut analysable
+	if (analysableAttributeStatsArrOutput.GetSize() == 0)
+	{
+		commandLine.AddError("No attribute to analyse.");
+		return false;
+	}
+
+	return true;
+}
+
+bool PrepareStats(const ALString& attributeName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
+		  KWTupleTable& univariate, const StatPreparationMode mode)
+{
+	if (mode == StatPreparationMode::Supervised)
+	{
+		learningSpec.SetTargetAttributeName(attributeName);
+	}
+	else
+	{
+		learningSpec.SetTargetAttributeName("");
+	}
+	loader.LoadUnivariate(attributeName, &univariate);
+	return learningSpec.ComputeTargetStats(&univariate);
 }
 
 void WriteJSONReport(const ALString& sJSONReportName, const UPLearningSpec& learningSpec, ObjectArray& attribStats)
@@ -393,4 +568,51 @@ void WriteJSONReport(const ALString& sJSONReportName, const UPLearningSpec& lear
 	}
 
 	fJSON.Close();
+}
+
+void RegisterDiscretizers()
+{
+	// Enregistrement des methodes de pretraitement supervisees et non supervisees
+	KWDiscretizer::RegisterDiscretizer(KWType::Symbol, new KWDiscretizerMODL);
+	KWDiscretizer::RegisterDiscretizer(KWType::Symbol, new UPDiscretizerUMODL);
+	KWDiscretizer::RegisterDiscretizer(KWType::Symbol, new KWDiscretizerEqualWidth);
+	KWDiscretizer::RegisterDiscretizer(KWType::Symbol, new KWDiscretizerEqualFrequency);
+	KWDiscretizer::RegisterDiscretizer(KWType::Symbol, new KWDiscretizerMODLEqualWidth);
+	KWDiscretizer::RegisterDiscretizer(KWType::Symbol, new KWDiscretizerMODLEqualFrequency);
+	KWDiscretizer::RegisterDiscretizer(KWType::None, new MHDiscretizerTruncationMODLHistogram);
+	KWDiscretizer::RegisterDiscretizer(KWType::None, new KWDiscretizerEqualWidth);
+	KWDiscretizer::RegisterDiscretizer(KWType::None, new KWDiscretizerEqualFrequency);
+	KWGrouper::RegisterGrouper(KWType::Symbol, new KWGrouperMODL);
+	KWGrouper::RegisterGrouper(KWType::Symbol, new UPGrouperUMODL);
+	KWGrouper::RegisterGrouper(KWType::Symbol, new KWGrouperBasicGrouping);
+	KWGrouper::RegisterGrouper(KWType::Symbol, new KWGrouperMODLBasic);
+	KWGrouper::RegisterGrouper(KWType::None, new KWGrouperBasicGrouping);
+	KWGrouper::RegisterGrouper(KWType::None, new KWGrouperUnsupervisedMODL);
+}
+
+void RegisterParallelTasks()
+{
+	// Declaration des taches paralleles
+	PLParallelTask::RegisterTask(new KWFileIndexerTask);
+	// PLParallelTask::RegisterTask(new KWFileKeyExtractorTask);
+	// PLParallelTask::RegisterTask(new KWChunkSorterTask);
+	// PLParallelTask::RegisterTask(new KWKeySampleExtractorTask);
+	// PLParallelTask::RegisterTask(new KWSortedChunkBuilderTask);
+	PLParallelTask::RegisterTask(new KWKeySizeEvaluatorTask);
+	PLParallelTask::RegisterTask(new KWKeyPositionSampleExtractorTask);
+	PLParallelTask::RegisterTask(new KWKeyPositionFinderTask);
+	// PLParallelTask::RegisterTask(new KWDatabaseCheckTask);
+	// PLParallelTask::RegisterTask(new KWDatabaseTransferTask);
+	// PLParallelTask::RegisterTask(new KWDatabaseBasicStatsTask);
+	PLParallelTask::RegisterTask(new KWDatabaseSlicerTask);
+	PLParallelTask::RegisterTask(new KWDataPreparationUnivariateTask);
+	// PLParallelTask::RegisterTask(new KWDataPreparationBivariateTask);
+	// PLParallelTask::RegisterTask(new KWClassifierEvaluationTask);
+	// PLParallelTask::RegisterTask(new KWRegressorEvaluationTask);
+	// PLParallelTask::RegisterTask(new KWClassifierUnivariateEvaluationTask);
+	// PLParallelTask::RegisterTask(new KWRegressorUnivariateEvaluationTask);
+	// PLParallelTask::RegisterTask(new SNBPredictorSelectiveNaiveBayesTrainingTask);
+	// PLParallelTask::RegisterTask(new KDSelectionOperandSamplingTask);
+	// PLParallelTask::RegisterTask(new DTDecisionTreeCreationTask);
+	// PLParallelTask::RegisterTask(new KDTextTokenSampleCollectionTask);
 }
