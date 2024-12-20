@@ -20,7 +20,7 @@
 int main(int argc, char** argv)
 {
 	// pour detecter l'allocation a la source de la non desallocation en mode debug
-	// mettre le numero de bloc non desaloue et mettre un poitn d'arret dans Standard.h ligne 686 exit(nExitCode);
+	// mettre le numero de bloc non desaloue et mettre un point d'arret dans Standard.h ligne 686 exit(nExitCode);
 	// MemSetAllocIndexExit(5642);
 
 	Cleaner cleaner;
@@ -111,9 +111,6 @@ int main(int argc, char** argv)
 	// Enregistrement des regles liees aux datagrids
 	KWDRRegisterDataGridRules();
 
-	const KWAttribute* const varAttrib = kwcDico->GetHeadAttribute();
-	const ALString& varAttribName = varAttrib->GetName();
-
 	// creation du tupleLoader
 	KWTupleTableLoader tupleTableLoader;
 	tupleTableLoader.SetInputClass(kwcDico);
@@ -122,6 +119,7 @@ int main(int argc, char** argv)
 	// creation de learninspec
 	UPLearningSpec learningSpec;
 	learningSpec.GetPreprocessingSpec()->GetDiscretizerSpec()->SetSupervisedMethodName("UMODL");
+	learningSpec.GetPreprocessingSpec()->GetGrouperSpec()->SetSupervisedMethodName("MODL");
 	learningSpec.SetClass(kwcDico);
 	learningSpec.SetDatabase(&readDatabase);
 	learningSpec.SetTargetAttributeName(attribTargetName);
@@ -151,38 +149,9 @@ int main(int argc, char** argv)
 
 	// accumulation des stats d'attribut par calcul supervise selon le traitement et la cible
 	ObjectArray attribStats;
+	AnalyseAllUsedVariables(attribStats, tupleTableLoader, learningSpec, attribTreatName, attribTargetName);
 
-	// tupletable des variables et des attributs traitement et cible
-	KWTupleTable multivariatevaruplift;
-
-	// boucle sur les attributs pour preparer les stats avant reconstruction du dictionnaire
-	StringVector svAttributeNames;
-	svAttributeNames.Initialize();
-	svAttributeNames.SetSize(3);
-	svAttributeNames.SetAt(1, attribTargetName);
-	svAttributeNames.SetAt(2, attribTreatName);
-	for (KWAttribute* currAttrib = kwcDico->GetHeadAttribute(); currAttrib; kwcDico->GetNextAttribute(currAttrib))
-	{
-		const ALString& attribName = currAttrib->GetName();
-		if (attribName == attribTargetName or attribName == attribTreatName or not currAttrib->GetUsed())
-		{
-			continue;
-		}
-
-		svAttributeNames.SetAt(0, attribName);
-
-		tupleTableLoader.LoadMultivariate(&svAttributeNames, &multivariatevaruplift);
-
-		UPAttributeStats* const currStats = new UPAttributeStats;
-		InitAndComputeAttributeStats(*currStats, currAttrib->GetName(), currAttrib->GetType(), learningSpec,
-					     multivariatevaruplift);
-		attribStats.Add(currStats);
-
-		//DDD
-		cout << "Attribute stats learning spec: " << currStats->GetLearningSpec() << " "
-		     << learningSpec.GetNullCost() << endl;
-	}
-
+	// edition du rapport sur les stats des variables
 	WriteJSONReport(reportJSONFileName, learningSpec, attribStats);
 
 	// reconstruction du dictionnaire, avec stats
@@ -192,6 +161,7 @@ int main(int argc, char** argv)
 	// sauvegarde dans un fichier
 	recodedDomain.WriteFile(outputFileName);
 
+	// nettoyage des UPAttributeStats crees par AnalyseAllUsedVariables
 	attribStats.DeleteAll();
 
 	std::cout << "fin  test" << endl;
