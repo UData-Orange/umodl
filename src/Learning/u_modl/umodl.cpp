@@ -475,13 +475,11 @@ int main(int argc, char** argv)
 	// creation de learninspec
 	UPLearningSpec learningSpec;
 	learningSpec.GetPreprocessingSpec()->GetDiscretizerSpec()->SetSupervisedMethodName("UMODL");
+	learningSpec.GetPreprocessingSpec()->GetGrouperSpec()->SetSupervisedMethodName("UMODL");
 	learningSpec.SetClass(kwcDico);
 	learningSpec.SetDatabase(&readDatabase);
 	learningSpec.SetTargetAttributeName(attribTargetName);
 	learningSpec.SetTreatementAttributeName(attribTreatName);
-
-	//DDD
-	cout << "Initial learning spec: " << &learningSpec << endl;
 
 	// // calculs de stats de base en non supervise
 	// // pour determiner des caracteristiques simples sur les donnees :
@@ -552,10 +550,6 @@ int main(int argc, char** argv)
 
 	learningSpec.ComputeTargetStats(&univariate);
 
-	//DDD
-	cout << "Initial learning spec 2: " << &learningSpec << " " << learningSpec.GetNullPreparationCost() << endl;
-	cout << "Initial learning spec 3: " << &learningSpec << " " << learningSpec.GetNullCost() << endl;
-
 	// accumulation des stats d'attribut par calcul supervise selon la cible concatenee
 	ObjectArray attribStats;
 
@@ -586,9 +580,9 @@ int main(int argc, char** argv)
 		InitAndComputeStats(*currStats, *currAttrib, learningSpec, multivariatevaruplift);
 		attribStats.Add(currStats);
 
-		//DDD
-		cout << "Attribute stats learning spec: " << currStats->GetLearningSpec() << " "
-		     << learningSpec.GetNullCost() << endl;
+		//NV
+		//cout << "Attribute stats learning spec: " << currStats->GetLearningSpec() << " "
+		//     << learningSpec.GetNullCost() << endl;
 
 		bivariateVarConcat.CleanAll();
 	}
