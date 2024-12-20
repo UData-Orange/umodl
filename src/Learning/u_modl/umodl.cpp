@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 	// creation de learninspec
 	UPLearningSpec learningSpec;
 	learningSpec.GetPreprocessingSpec()->GetDiscretizerSpec()->SetSupervisedMethodName("UMODL");
-	learningSpec.GetPreprocessingSpec()->GetGrouperSpec()->SetSupervisedMethodName("MODL");
+	learningSpec.GetPreprocessingSpec()->GetGrouperSpec()->SetSupervisedMethodName("UMODL");
 	learningSpec.SetClass(kwcDico);
 	learningSpec.SetDatabase(&readDatabase);
 	learningSpec.SetTargetAttributeName(attribTargetName);

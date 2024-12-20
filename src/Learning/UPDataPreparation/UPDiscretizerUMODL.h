@@ -63,7 +63,25 @@ public:
 
 	/////////////////////////////////////////////////////////////////
 	//// Implementation
+
+	void InitFrequencyTable(KWFrequencyTable* kwftSource) const;
+	void InitFrequencyVector(const KWFrequencyVector* kwfvVector) const;
+	boolean CheckUPFrequencyTable(KWFrequencyTable* kwftSource) const;
+	boolean CheckUPFrequencyVector(const KWFrequencyVector* kwfvVector) const;
+
+	// Acces au nombre de modalites
+	int GetTargetModalityNumber() const;
+	void SetTargetModalityNumber(int nModality);
+
+	// Acces au nombre de modalites
+	int GetTreatementModalityNumber() const;
+	void SetTreatementModalityNumber(int nModality);
+
 protected:
+	// Attributs principaux
+	int nTreatementModalityNumber;
+	int nTargetModalityNumber;
+
 	friend class KWDataGridManager;
 
 	// Discretisation d'une table granularisee
@@ -513,4 +531,28 @@ inline double UPDiscretizerUMODL::ComputeIntervalCost(const KWFrequencyVector* i
 inline double UPDiscretizerUMODL::ComputePartitionGlobalCost(const KWFrequencyTable* partTable) const
 {
 	return discretizationCosts->ComputePartitionGlobalCost(partTable);
+}
+
+inline int UPDiscretizerUMODL::GetTargetModalityNumber() const
+{
+	return nTargetModalityNumber;
+}
+
+inline void UPDiscretizerUMODL::SetTargetModalityNumber(int nModality)
+{
+	nTargetModalityNumber = nModality;
+	cast(UPDenseFrequencyVector*, discretizationCosts->GetFrequencyVectorCreator())
+	    ->SetTargetModalityNumber(nModality);
+}
+
+inline int UPDiscretizerUMODL::GetTreatementModalityNumber() const
+{
+	return nTreatementModalityNumber;
+}
+
+inline void UPDiscretizerUMODL::SetTreatementModalityNumber(int nModality)
+{
+	nTreatementModalityNumber = nModality;
+	cast(UPDenseFrequencyVector*, discretizationCosts->GetFrequencyVectorCreator())
+	    ->SetTreatementModalityNumber(nModality);
 }

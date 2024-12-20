@@ -38,77 +38,8 @@ int UPDenseFrequencyVector::ComputeTotalFrequency() const
 }
 
 ////////////////////////////////////////////////////////////////////
-// Classe UPFrequencyTable
+// Classe KWFrequencyTable
 
-UPFrequencyTable::UPFrequencyTable()
-{
-	delete kwfvFrequencyVectorCreator;
-	kwfvFrequencyVectorCreator = new UPDenseFrequencyVector;
-	nTotalFrequency = -1;
-	nGranularity = 0;
-	nGarbageModalityNumber = 0;
-	nInitialValueNumber = 0;
-	nGranularizedValueNumber = 0;
-	nTargetModalityNumber = 1;
-	nTreatementModalityNumber = 1;
-}
 
-UPFrequencyTable::~UPFrequencyTable() {}
-/* {
-	oaFrequencyVectors.DeleteAll();
 
-	if (kwfvFrequencyVectorCreator != NULL)
-		delete kwfvFrequencyVectorCreator;
-}*/
 
-void UPFrequencyTable::CopyFrom(const KWFrequencyTable* kwftOriSource)
-{
-
-	KWFrequencyTable::CopyFrom(kwftOriSource);
-	//NV
-	UPFrequencyTable* kwftSource = cast(UPFrequencyTable*, kwftOriSource);
-	SetTargetModalityNumber(kwftSource->GetTargetModalityNumber());
-	SetTreatementModalityNumber(kwftSource->GetTreatementModalityNumber());
-	nTargetModalityNumber = cast(UPFrequencyTable*, kwftOriSource)->nTargetModalityNumber;
-	nTreatementModalityNumber = cast(UPFrequencyTable*, kwftOriSource)->nTreatementModalityNumber;
-}
-
-KWFrequencyTable* UPFrequencyTable::Clone() const
-{
-	UPFrequencyTable* kwftClone;
-
-	kwftClone = new UPFrequencyTable;
-	kwftClone->nTargetModalityNumber = nTargetModalityNumber;
-	kwftClone->nTreatementModalityNumber = nTreatementModalityNumber;
-	kwftClone->CopyFrom(this);
-	return kwftClone;
-}
-
-void UPFrequencyTable::Write(ostream& ost) const
-{
-	int i;
-	KWFrequencyVector* kwfvCurrent;
-
-	ost << "Initial value number\t" << nInitialValueNumber << "\tGranularized value number\t"
-	    << nGranularizedValueNumber << endl;
-	// Affichage de la granularite et de la taille du groupe poubelle
-	ost << "Granularity\t" << nGranularity << "\tGarbage modality number\t" << nGarbageModalityNumber << "\n";
-
-	// Affichage de la table si non vide
-	assert(oaFrequencyVectors.GetSize() == 0 or kwfvFrequencyVectorCreator != NULL);
-	for (i = 0; i < GetFrequencyVectorNumber(); i++)
-	{
-		kwfvCurrent = GetFrequencyVectorAt(i);
-
-		// Affichage du vecteur d'effectif
-		if (i == 0)
-		{
-			ost << "Index\t";
-			kwfvCurrent->WriteHeaderLineReport(ost);
-			ost << "\n";
-		}
-		ost << i << "\t";
-		kwfvCurrent->WriteLineReport(ost);
-		ost << "\n";
-	}
-}

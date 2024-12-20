@@ -1309,7 +1309,8 @@ void UPDiscretizerUMODL::InitializeFrequencyVector(KWFrequencyVector* kwfvFreque
 	IntVector* ivFrequencyVector;
 
 	require(kwfvFrequencyVector != NULL);
-
+	//NV
+	InitFrequencyVector(kwfvFrequencyVector);
 	// Retaillage avec le bon nombre de classes
 	ivFrequencyVector = cast(KWDenseFrequencyVector*, kwfvFrequencyVector)->GetFrequencyVector();
 	ivFrequencyVector->SetSize(discretizationCosts->GetClassValueNumber());

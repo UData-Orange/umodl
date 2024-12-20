@@ -44,6 +44,8 @@ UPLearningSpec::UPLearningSpec()
 	treatementDescriptiveStats = NULL;
 	treatementValueStats = NULL;
 	nMainTreatementModalityIndex = -1;
+	nTreatementModalityNumber = 0;
+	nTargetModalityNumber = 0;
 }
 
 UPLearningSpec::~UPLearningSpec()
@@ -401,19 +403,19 @@ int UPLearningSpec::ComputeMainTreatementModalityIndex() const
 
 void UPLearningSpec::ComputeNullCost()
 {
-	UPDiscretizerUMODL discretizerMODL;
+	KWDiscretizerMODL discretizerMODL;
 	KWDiscretizerMODLFamily* discretizerMODLFamily;
 	KWDataGrid nullDataGrid;
 	KWDGPart* nullPart;
 	ObjectArray oaParts;
 	KWDGCell* nullCell;
 	KWDataGridRegressionCosts nullRegressionCost;
-	UPFrequencyTable nullFrequencyTable;
+	KWFrequencyTable nullFrequencyTable;
 	KWFrequencyTable* kwftNullPreparedTable;
-	UPDenseFrequencyVector* kwdfvFrequencyVector;
+	KWDenseFrequencyVector* kwdfvFrequencyVector;
 	IntVector* ivFrequencyVector;
 	int i;
-	int nValueNumber, nTreatementNumber;
+	int nValueNumber;
 
 	require(GetTargetAttributeName() == "" or GetTargetValueStats() != NULL);
 
@@ -425,27 +427,29 @@ void UPLearningSpec::ComputeNullCost()
 			->GetDiscretizerSpec()
 			->GetDiscretizer(GetTargetAttributeType())
 			->IsMODLFamily())
-			discretizerMODLFamily = cast(
-			    KWDiscretizerMODLFamily*,
-			    GetPreprocessingSpec()->GetDiscretizerSpec()->GetDiscretizer(GetTargetAttributeType()));
+			//discretizerMODLFamily = cast(
+			//   KWDiscretizerMODLFamily*,
+			//  GetPreprocessingSpec()->GetDiscretizerSpec()->GetDiscretizer(GetTargetAttributeType()));
+			discretizerMODLFamily = &discretizerMODL;
 		// Sinon, on prend le discretiseur MODL standard
 		else
 			discretizerMODLFamily = &discretizerMODL;
 
 		// Creation d'une table de contingence cible avec une seule ligne et une colonne par valeur
-		nValueNumber = GetTargetValueStats()->GetAttributeAt(0)->GetPartNumber();
-		nTreatementNumber = GetTreatementValueStats()->GetAttributeAt(0)->GetPartNumber();
+		nTargetModalityNumber = GetTargetValueStats()->GetAttributeAt(0)->GetPartNumber();
+		nValueNumber = nTargetModalityNumber;
+		nTreatementModalityNumber = GetTreatementValueStats()->GetAttributeAt(0)->GetPartNumber();
+		//nullFrequencyTable.SetFrequencyVectorCreator(new UPDenseFrequencyVector);
+		//InitFrequencyVector(nullFrequencyTable.GetFrequencyVectorCreator());
 		nullFrequencyTable.SetFrequencyVectorNumber(1);
-		nullFrequencyTable.SetTargetModalityNumber(nValueNumber);
-		nullFrequencyTable.SetTreatementModalityNumber(nTreatementNumber);
 
 		// Acces au vecteur de la ligne et parametrage de sa taille (sense etre en representation dense)
-		kwdfvFrequencyVector = cast(UPDenseFrequencyVector*, nullFrequencyTable.GetFrequencyVectorAt(0));
-		kwdfvFrequencyVector->SetTargetModalityNumber(nValueNumber);
-		kwdfvFrequencyVector->SetTreatementModalityNumber(nTreatementNumber);
+		kwdfvFrequencyVector = cast(KWDenseFrequencyVector*, nullFrequencyTable.GetFrequencyVectorAt(0));
+		//int test = kwdfvFrequencyVector->GetTargetModalityNumber();
+		//test = kwdfvFrequencyVector->GetTreatementModalityNumber();
 		ivFrequencyVector = kwdfvFrequencyVector->GetFrequencyVector();
 
-		ivFrequencyVector->SetSize(nValueNumber * nTreatementNumber);
+		ivFrequencyVector->SetSize(nValueNumber);
 		ivFrequencyVector->Initialize();
 		// Alimentation de cette ligne par les frequences globales des valeurs cibles
 		assert(GetTargetDescriptiveStats()->GetValueNumber() == GetTargetValueStats()->ComputeTargetGridSize());
@@ -479,4 +483,47 @@ void UPLearningSpec::ComputeNullCost()
 		dNullPreparationCost = 0;
 		dNullDataCost = 0;
 	}
+}
+
+void UPLearningSpec::InitFrequencyTable(KWFrequencyTable* kwftSource)
+{
+	int i;
+	kwftSource->SetFrequencyVectorCreator(new UPDenseFrequencyVector);
+	InitFrequencyVector(kwftSource->GetFrequencyVectorCreator());
+	for (i = 0; i < kwftSource->GetFrequencyVectorNumber(); i++)
+	{
+		InitFrequencyVector(kwftSource->GetFrequencyVectorAt(i));
+	}
+}
+void UPLearningSpec::InitFrequencyVector(const KWFrequencyVector* kwfvVector)
+{
+	require(kwfvVector->GetClassLabel() == "Uplift Dense frequency vector");
+	cast(UPDenseFrequencyVector*, kwfvVector)->SetTargetModalityNumber(nTargetModalityNumber);
+	cast(UPDenseFrequencyVector*, kwfvVector)->SetTreatementModalityNumber(nTreatementModalityNumber);
+}
+
+boolean UPLearningSpec::CheckFrequencyTable(KWFrequencyTable* kwftSource)
+{
+	boolean bOk;
+	int i;
+
+	if (kwftSource->GetFrequencyVectorCreator()->GetClassLabel() != "Uplift Dense frequency vector")
+		return false;
+
+	for (i = 0; i < kwftSource->GetFrequencyVectorNumber(); i++)
+	{
+		if (CheckFrequencyVector(kwftSource->GetFrequencyVectorAt(i)) == false)
+			return false;
+	}
+	return true;
+}
+boolean UPLearningSpec::CheckFrequencyVector(const KWFrequencyVector* kwfvVector)
+{
+	if (kwfvVector->GetClassLabel() != "Uplift Dense frequency vector")
+		return false;
+	if (cast(UPDenseFrequencyVector*, kwfvVector)->GetTargetModalityNumber() != nTargetModalityNumber)
+		return false;
+	if (cast(UPDenseFrequencyVector*, kwfvVector)->GetTreatementModalityNumber() != nTreatementModalityNumber)
+		return false;
+	return true;
 }

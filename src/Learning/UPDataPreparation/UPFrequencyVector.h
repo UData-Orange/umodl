@@ -63,54 +63,7 @@ protected:
 	int nTreatementModalityNumber;
 };
 
-////////////////////////////////////////////////////////////////////
-// Tableau d'effectif
-// Il s'agit en fait d'un tableau de vecteurs d'effectifs
-// d'une sous-classe de KWFrequencyVector.
-// Cette classe est adaptee aux algorithmes de regroupement des lignes
-// (discretisation et groupage)
-class UPFrequencyTable : public KWFrequencyTable
-{
-public:
-	// Constructeur
-	UPFrequencyTable();
-	~UPFrequencyTable();
 
-	////////////////////////////////////////////////////////
-	// Divers
-	// Copie a partir d'une table source
-	void CopyFrom(const KWFrequencyTable* kwftSource);
-
-	// Duplication (y compris du contenu)
-	KWFrequencyTable* Clone() const;
-
-	// Affichage
-	// Integre l'affichage de la granularite et du nombre de modalites du groupe poubelle
-	void Write(ostream& ost) const override;
-
-	/////////////////////////////////////////////////////
-	// Parametrage avance
-
-	// Acces au nombre de modalites
-	int GetTargetModalityNumber() const;
-	void SetTargetModalityNumber(int nModality);
-
-	// Acces au nombre de modalites
-	int GetTreatementModalityNumber() const;
-	void SetTreatementModalityNumber(int nModality);
-
-	///////////////////////////////
-	///// Implementation
-
-	///////////////////////////////
-	///// Implementation
-	// Verification de l'integrite des specification
-	boolean Check();
-
-protected:
-	int nTargetModalityNumber;
-	int nTreatementModalityNumber;
-};
 
 ///////////////////////////////////////////////////////////////////////
 // Methodes en inline
@@ -152,6 +105,7 @@ inline void UPDenseFrequencyVector::CopyFrom(const KWFrequencyVector* kwfvSource
 
 	// Recopie du vecteur d'effectifs
 	ivFrequencyVector.CopyFrom(&(kwdfvSource->ivFrequencyVector));
+
 	nTargetModalityNumber = cast(UPDenseFrequencyVector*, kwfvSource)->nTargetModalityNumber;
 	nTreatementModalityNumber = cast(UPDenseFrequencyVector*, kwfvSource)->nTreatementModalityNumber;
 }
@@ -208,43 +162,4 @@ inline int UPDenseFrequencyVector::GetTreatementModalityNumber() const
 inline void UPDenseFrequencyVector::SetTreatementModalityNumber(int nModality)
 {
 	nTreatementModalityNumber = nModality;
-}
-
-// Classe UPFrequencyTable
-
-inline int UPFrequencyTable::GetTargetModalityNumber() const
-{
-	return nTargetModalityNumber;
-}
-
-inline void UPFrequencyTable::SetTargetModalityNumber(int nModality)
-{
-	nTargetModalityNumber = nModality;
-}
-
-inline int UPFrequencyTable::GetTreatementModalityNumber() const
-{
-	return nTreatementModalityNumber;
-}
-
-inline void UPFrequencyTable::SetTreatementModalityNumber(int nModality)
-{
-	nTreatementModalityNumber = nModality;
-}
-
-inline boolean UPFrequencyTable::Check()
-{
-	boolean bOk;
-	bOk = false;
-
-	if (oaFrequencyVectors.GetSize() > 0)
-	{
-		UPDenseFrequencyVector* vect = cast(UPDenseFrequencyVector*, GetFrequencyVectorAt(0));
-		if (vect->GetSize() != 4)
-			return false;
-	}
-	if (nTreatementModalityNumber == 2 && nTargetModalityNumber == 2)
-		bOk = true;
-
-	return bOk;
 }

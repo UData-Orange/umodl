@@ -98,6 +98,12 @@ public:
 
 	/////////////////////////////////////////////////
 	///// Implementation
+	void InitFrequencyTable(KWFrequencyTable* kwftSource);
+	void InitFrequencyVector(const KWFrequencyVector* kwfvVector);
+	boolean CheckFrequencyTable(KWFrequencyTable* kwftSource);
+	boolean CheckFrequencyVector(const KWFrequencyVector* kwfvVector);
+	int nTreatementModalityNumber;
+	int nTargetModalityNumber;
 
 protected:
 	// Reinitialisation des statistiques descriptives

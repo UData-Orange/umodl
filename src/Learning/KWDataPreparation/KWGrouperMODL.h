@@ -120,8 +120,8 @@ protected:
 	// - on cree des parties singletons pour les modalites dont l'effectif est superieur a N/N_G
 	// - la partie "fourre-tout" contient l'ensemble des modalites dont l'effectif est inf a N/N_G
 	// Les modalites-singletons sont mises dans le fourre-tout pour toute granularite G >= 1
-	void GranularizeFrequencyTable(KWFrequencyTable* kwctSource, KWFrequencyTable*& kwctTarget, int nGranularity,
-				       KWQuantileGroupBuilder* quantileBuilder) const;
+	virtual void GranularizeFrequencyTable(KWFrequencyTable* kwctSource, KWFrequencyTable*& kwctTarget,
+					       int nGranularity, KWQuantileGroupBuilder* quantileBuilder) const;
 
 	// Post-optimisation de la granularite, en recherchant une granularite moindre aboutissant au meme decoupage en
 	// groupes de valeurs

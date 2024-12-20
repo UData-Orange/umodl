@@ -14,7 +14,6 @@
 
 UPMODLDiscretizationCosts::UPMODLDiscretizationCosts()
 {
-
 	if (kwfvFrequencyVectorCreator != NULL)
 		delete kwfvFrequencyVectorCreator;
 
@@ -594,6 +593,10 @@ const ALString UPMODLGroupingCosts::GetClassLabel() const
 
 UPUnivariateNullPartitionCosts::UPUnivariateNullPartitionCosts()
 {
+	if (kwfvFrequencyVectorCreator != NULL)
+		delete kwfvFrequencyVectorCreator;
+
+	kwfvFrequencyVectorCreator = new UPDenseFrequencyVector;
 	univariatePartitionCosts = NULL;
 }
 
