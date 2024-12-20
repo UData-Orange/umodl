@@ -5,6 +5,7 @@
 #include "UPAttributeStats.h"
 #include "UpLearningSpec.h"
 #include "UPFrequencyVector.h"
+#include "UPGrouperUMODL.h"
 
 UPAttributeStats::UPAttributeStats()
 {
@@ -933,6 +934,13 @@ void UPAttributeStats::Discretize(const KWTupleTable* tupleTable)
 					discretizerMODLFamily->GetDiscretizationCosts()->SetAttributeCost(
 					    attribute->GetCost());
 				}
+				//initiamlisation du discretizer
+				cast(UPDiscretizerUMODL*, GetPreprocessingSpec()->GetDiscretizerSpec()->GetDiscretizer(
+							      GetTargetAttributeType()))
+				    ->SetTargetModalityNumber(uplearningspec->nTargetModalityNumber);
+				cast(UPDiscretizerUMODL*, GetPreprocessingSpec()->GetDiscretizerSpec()->GetDiscretizer(
+							      GetTargetAttributeType()))
+				    ->SetTreatementModalityNumber(uplearningspec->nTreatementModalityNumber);
 
 				// Utilisation du discretiseur specifie dans les pretraitements
 				GetPreprocessingSpec()
@@ -1008,7 +1016,7 @@ void UPAttributeStats::Discretize(const KWTupleTable* tupleTable)
 KWFrequencyTable*
 UPAttributeStats::ComputeInitialContinuousFrequencyTableWithoutPureIntervals(const KWTupleTable* tupleTable)
 {
-	UPFrequencyTable* resultTable;
+	KWFrequencyTable* resultTable;
 	int nTargetValueNumber;
 	int nTargetIndex;
 	int nTreatementIndex;
@@ -1047,7 +1055,8 @@ UPAttributeStats::ComputeInitialContinuousFrequencyTableWithoutPureIntervals(con
 	//memorisation
 
 	// Initialisation de la taille des resultats
-	resultTable = new UPFrequencyTable;
+	resultTable = new KWFrequencyTable;
+	uplearningspec->InitFrequencyTable(resultTable);
 	resultTable->SetFrequencyVectorNumber(nSourceValueNumber);
 	for (nSource = 0; nSource < nSourceValueNumber; nSource++)
 	{
@@ -1063,10 +1072,6 @@ UPAttributeStats::ComputeInitialContinuousFrequencyTableWithoutPureIntervals(con
 	// Ce n'est pas le nombre de valeurs distinctes qui depend de la precision de codage des donnees intiales
 	resultTable->SetInitialValueNumber(tupleTable->GetTotalFrequency());
 	resultTable->SetGranularizedValueNumber(resultTable->GetInitialValueNumber());
-
-	//NV
-	resultTable->SetTargetModalityNumber(nTargetValueNumber);
-	resultTable->SetTreatementModalityNumber(nTreatementValueNumber);
 
 	// Parcours de la table de tuples pour initialiser le contenu des resultats
 	nSource = 0;
@@ -1510,6 +1515,7 @@ void UPAttributeStats::BuildPreparedDiscretizationDataGridStats(const KWTupleTab
 void UPAttributeStats::Group(const KWTupleTable* tupleTable)
 {
 	KWGrouperMODLFamily* grouperMODLFamily;
+	UPGrouperUMODL* grouperUMODL;
 	KWAttribute* attribute;
 	SymbolVector* svInitialSourceModalities;
 	KWFrequencyTable* kwftInitialTable;
@@ -1518,12 +1524,16 @@ void UPAttributeStats::Group(const KWTupleTable* tupleTable)
 	KWDenseFrequencyVector* kwdfvFrequencyVector;
 	IntVector* ivFrequencyVector;
 	int i;
+	UPLearningSpec* uplearningspec;
+
+	uplearningspec = cast(UPLearningSpec*, GetLearningSpec());
 
 	require(Check());
 	require(GetTargetAttributeType() == KWType::Symbol);
 	require(tupleTable->GetTotalFrequency() > 0);
 	require(GetAttributeType() == KWType::Symbol);
 	require(preparedDataGridStats == NULL);
+	require(GetLearningSpec()->GetClassLabel() == "Uplift Learning specification");
 
 	// Initialisation du cout de construction, quelque soit la methode
 	attribute = GetClass()->LookupAttribute(GetAttributeName());
@@ -1554,6 +1564,27 @@ void UPAttributeStats::Group(const KWTupleTable* tupleTable)
 			// Parametrage du cout de l'attribut
 			grouperMODLFamily->GetGroupingCosts()->SetAttributeCost(attribute->GetCost());
 		}
+		//
+
+		if (GetPreprocessingSpec()->GetGrouperSpec()->GetGrouper(GetTargetAttributeType())->GetName() ==
+		    "UMODL")
+		{
+			grouperUMODL =
+			    cast(UPGrouperUMODL*,
+				 GetPreprocessingSpec()->GetGrouperSpec()->GetGrouper(GetTargetAttributeType()));
+
+			grouperUMODL->SetTargetModalityNumber(
+			    cast(UPLearningSpec*, GetLearningSpec())->GetTargetDescriptiveStats()->GetValueNumber());
+			grouperUMODL->SetTreatementModalityNumber(cast(UPLearningSpec*, GetLearningSpec())
+								      ->GetTreatementDescriptiveStats()
+								      ->GetValueNumber());
+		}
+
+		//initiamlisation du grouper
+		cast(UPGrouperUMODL*, GetPreprocessingSpec()->GetGrouperSpec()->GetGrouper(GetTargetAttributeType()))
+		    ->SetTargetModalityNumber(uplearningspec->nTargetModalityNumber);
+		cast(UPGrouperUMODL*, GetPreprocessingSpec()->GetGrouperSpec()->GetGrouper(GetTargetAttributeType()))
+		    ->SetTreatementModalityNumber(uplearningspec->nTreatementModalityNumber);
 
 		// Utilisation du grouper specifie dans les pretraitements
 		GetPreprocessingSpec()
@@ -1639,39 +1670,60 @@ void UPAttributeStats::BuildInitialFrequencyTable(const KWTupleTable* tupleTable
 	Symbol sValue;
 	Symbol sTargetValue;
 	Symbol sRef;
-	KWDenseFrequencyVector* kwdfvFrequencyVector;
+	UPDenseFrequencyVector* kwdfvFrequencyVector;
 	IntVector* ivFrequencyVector;
+	UPDenseFrequencyVector* kwdfvSourceFrequencyVector;
+	KWFrequencyTable* resultTable;
+	IntVector* ivSourceFrequencies;
+	UPLearningSpec* uplearningspec;
+	int nTreatementValueNumber;
+	int nTreatementIndex;
 
 	require(nSourceValueNumber >= 0);
 	require(GetAttributeType() == KWType::Symbol);
 	require(tupleTable != NULL);
 	require(tupleTable->GetAttributeNameAt(0) == GetAttributeName());
 	require(GetTargetAttributeName() == "" or tupleTable->GetAttributeNameAt(1) == GetTargetAttributeName());
+	require(tupleTable->GetAttributeNameAt(0) == GetAttributeName());
+	require(tupleTable->GetAttributeNameAt(1) == GetTargetAttributeName());
+	require(GetLearningSpec()->GetClassLabel() == "Uplift Learning specification");
+
+	uplearningspec = cast(UPLearningSpec*, GetLearningSpec());
 
 	// Memorisation du nombre de classes cibles (1 dans le cas non supervise)
 	nTargetValueNumber = 1;
 	if (GetTargetAttributeName() != "")
 		nTargetValueNumber = GetTargetDescriptiveStats()->GetValueNumber();
 
+	// Memorisation du nombre de treatement cibles
+	nTreatementValueNumber = uplearningspec->GetTreatementDescriptiveStats()->GetValueNumber();
+
 	// Initialisation de la taille des resultats
 	svInitialSourceModalities = new SymbolVector;
 	svInitialSourceModalities->SetSize(nSourceValueNumber);
 	kwftInitialTable = new KWFrequencyTable;
+	uplearningspec->InitFrequencyTable(kwftInitialTable);
 	kwftInitialTable->SetFrequencyVectorNumber(nSourceValueNumber);
 	// Initialisation par defaut des nombres de valeurs
 	kwftInitialTable->SetInitialValueNumber(nSourceValueNumber);
 	kwftInitialTable->SetGranularizedValueNumber(nSourceValueNumber);
+	//kwftInitialTable->SetTargetModalityNumber(nTargetValueNumber);
+	//kwftInitialTable->SetTreatementModalityNumber(nTreatementValueNumber);
 
 	// Parametrage de la taille des vecteurs de la table d'effectifs
 	for (nSource = 0; nSource < nSourceValueNumber; nSource++)
 	{
 		// Acces au vecteur (sense etre en representation dense)
-		kwdfvFrequencyVector = cast(KWDenseFrequencyVector*, kwftInitialTable->GetFrequencyVectorAt(nSource));
+		kwdfvFrequencyVector = cast(UPDenseFrequencyVector*, kwftInitialTable->GetFrequencyVectorAt(nSource));
+		kwdfvFrequencyVector->SetTargetModalityNumber(nTargetValueNumber);
+		kwdfvFrequencyVector->SetTreatementModalityNumber(nTreatementValueNumber);
 
 		// Recopie de son contenu
 		ivFrequencyVector = kwdfvFrequencyVector->GetFrequencyVector();
-		ivFrequencyVector->SetSize(nTargetValueNumber);
+		ivFrequencyVector->SetSize(nTargetValueNumber * nTreatementValueNumber);
 	}
+
+	//NV
 
 	// Parcours de la base pour initialiser le contenu des resultats
 	nSource = 0;
@@ -1697,14 +1749,14 @@ void UPAttributeStats::BuildInitialFrequencyTable(const KWTupleTable* tupleTable
 		}
 
 		// Recherche de l'index de la classe cible
-		if (nTargetValueNumber > 1)
-			nTargetIndex =
-			    GetTargetValueStats()->GetAttributeAt(0)->ComputeSymbolPartIndex(tuple->GetSymbolAt(1));
-
+		//if (nTargetValueNumber > 1)
+		nTargetIndex = GetTargetValueStats()->GetAttributeAt(0)->ComputeSymbolPartIndex(tuple->GetSymbolAt(1));
+		nTreatementIndex = uplearningspec->GetTreatementValueStats()->GetAttributeAt(0)->ComputeSymbolPartIndex(
+		    tuple->GetSymbolAt(2));
 		// Mise a jour des statistiques dans la table d'effectifs
 		cast(KWDenseFrequencyVector*, kwftInitialTable->GetFrequencyVectorAt(nSource - 1))
 		    ->GetFrequencyVector()
-		    ->UpgradeAt(nTargetIndex, tuple->GetFrequency());
+		    ->UpgradeAt(nTargetIndex + nTreatementIndex * nTargetValueNumber, tuple->GetFrequency());
 	}
 	assert(nSource == nSourceValueNumber);
 }
@@ -1714,6 +1766,7 @@ void UPAttributeStats::BuildPreparedGroupingDataGridStats(SymbolVector* svInitia
 {
 	KWDGSAttributeGrouping* attributeGrouping;
 	KWDGSAttributeSymbolValues* attributeSymbolValues;
+	KWDGSAttributeSymbolValues* attributeSymbolValues2;
 	int nGroupNumber;
 	ObjectArray oaGroups;
 	SymbolVector* svGroupValues;
@@ -1730,6 +1783,10 @@ void UPAttributeStats::BuildPreparedGroupingDataGridStats(SymbolVector* svInitia
 	int nGroupSizeMax;
 	int nGarbageGroupIndex;
 	int nSuppressedValueNumber;
+	int nTreatement;
+	KWDenseFrequencyVector* kwdfvSourceFrequencyVector;
+	IntVector* ivSourceFrequencies;
+	IntVector ivPartIndexes;
 
 	require(Check());
 	require(preparedDataGridStats == NULL);
@@ -1898,6 +1955,10 @@ void UPAttributeStats::BuildPreparedGroupingDataGridStats(SymbolVector* svInitia
 		attributeSymbolValues =
 		    cast(KWDGSAttributeSymbolValues*, GetTargetValueStats()->GetAttributeAt(0)->Clone());
 
+		attributeSymbolValues2 =
+		    cast(KWDGSAttributeSymbolValues*,
+			 cast(UPLearningSpec*, learningSpec)->GetTreatementValueStats()->GetAttributeAt(0)->Clone());
+
 		// Creation de la grille de preparation
 		preparedDataGridStats = new KWDataGridStats;
 		// Memorisation de la granularite
@@ -1905,21 +1966,41 @@ void UPAttributeStats::BuildPreparedGroupingDataGridStats(SymbolVector* svInitia
 
 		preparedDataGridStats->AddAttribute(attributeGrouping);
 		preparedDataGridStats->AddAttribute(attributeSymbolValues);
+		preparedDataGridStats->AddAttribute(attributeSymbolValues2);
 		preparedDataGridStats->SetSourceAttributeNumber(1);
 		preparedDataGridStats->SetMainTargetModalityIndex(GetMainTargetModalityIndex());
 
 		// Parametrage des effectifs des cellules de la grille
 		preparedDataGridStats->CreateAllCells();
+		ivPartIndexes.SetSize(3);
+
 		for (nSource = 0; nSource < kwftGroupedTable->GetFrequencyVectorNumber(); nSource++)
 		{
-			for (nTarget = 0; nTarget < kwftGroupedTable->GetFrequencyVectorSize(); nTarget++)
+			/* for (nTarget = 0; nTarget < kwftGroupedTable->GetFrequencyVectorSize(); nTarget++)
 			{
 				preparedDataGridStats->SetBivariateCellFrequencyAt(
 				    nSource, nTarget,
 				    cast(KWDenseFrequencyVector*, kwftGroupedTable->GetFrequencyVectorAt(nSource))
 					->GetFrequencyVector()
 					->GetAt(nTarget));
-			}
+			}*/
+			// Acces au vecteur du partile (sense etre en representation dense)
+			kwdfvSourceFrequencyVector =
+			    cast(KWDenseFrequencyVector*, kwftGroupedTable->GetFrequencyVectorAt(nSource));
+			ivSourceFrequencies = kwdfvSourceFrequencyVector->GetFrequencyVector();
+
+			for (nTarget = 0; nTarget < 2; nTarget++)
+				for (nTreatement = 0; nTreatement < 2; nTreatement++)
+				//kwftDiscretizedTable->GetFrequencyVectorSize(); nTarget++)
+				{
+					//preparedDataGridStats->SetBivariateCellFrequencyAt(
+					//    nSource, nTarget, ivSourceFrequencies->GetAt(nTarget + nTreatement * 2));
+					ivPartIndexes.SetAt(0, nSource);
+					ivPartIndexes.SetAt(1, nTarget);
+					ivPartIndexes.SetAt(2, nTreatement);
+					preparedDataGridStats->SetCellFrequencyAt(
+					    &ivPartIndexes, ivSourceFrequencies->GetAt(nTarget + nTreatement * 2));
+				}
 		}
 	}
 	ensure(preparedDataGridStats->ComputeGridFrequency() == kwftGroupedTable->GetTotalFrequency());

@@ -478,6 +478,7 @@ inline KWMODLLine::KWMODLLine(const KWFrequencyVector* kwfvFrequencyVectorCreato
 	nextLine = NULL;
 	dCost = 0;
 	kwfvFrequencyVector = kwfvFrequencyVectorCreator->Create();
+
 	position = NULL;
 }
 

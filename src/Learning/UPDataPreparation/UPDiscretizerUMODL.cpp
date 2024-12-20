@@ -44,7 +44,8 @@ void UPDiscretizerUMODL::SetDiscretizationCosts(KWUnivariatePartitionCosts* kwup
 {
 	require(kwupcCosts != NULL);
 	require(discretizationCosts != NULL);
-	delete discretizationCosts;
+	if (discretizationCosts != NULL)
+		delete discretizationCosts;
 	discretizationCosts = kwupcCosts;
 }
 
@@ -90,9 +91,6 @@ void UPDiscretizerUMODL::Discretize(KWFrequencyTable* kwftSource, KWFrequencyTab
 
 	UPDenseFrequencyVector* vect = cast(UPDenseFrequencyVector*, discretizationCosts->GetFrequencyVectorCreator());
 
-	vect->SetTargetModalityNumber(cast(UPFrequencyTable*, kwftSource)->GetTargetModalityNumber());
-	vect->SetTreatementModalityNumber(cast(UPFrequencyTable*, kwftSource)->GetTreatementModalityNumber());
-
 	// Cas d'une base vide
 	if (nInstanceNumber == 0 or kwftSource->GetFrequencyVectorNumber() == 1)
 		kwftTarget = kwftSource->Clone();
@@ -127,22 +125,23 @@ void UPDiscretizerUMODL::Discretize(KWFrequencyTable* kwftSource, KWFrequencyTab
 			{
 				if (kwftTarget != NULL)
 					delete kwftTarget;
-				kwftTarget = new UPFrequencyTable;
+				kwftTarget = new KWFrequencyTable;
 				kwftTarget->ComputeNullTable(kwftSource);
 				break;
 			}
 
 			// Calcul de la table de contingence associee a la granularite a partir de kwctSource
 			GranularizeFrequencyTable(kwftSource, kwftGranularizedTable, nGranularity, &quantileBuilder);
+
 			//NV
-			assert(kwftGranularizedTable->GetFrequencyVectorAt(0)->GetSize() == 4);
+			ensure(CheckUPFrequencyTable(kwftGranularizedTable));
+
 			// Extraction du nombre de partiles de la table a la granularite courante
 			nCurrentPartileNumber = kwftGranularizedTable->GetFrequencyVectorNumber();
 
 			// Test s'il s'agit de la derniere granularite a traiter (si le nombre de parties est maximal)
 			bIsLastGranularity = (kwftSource->GetFrequencyVectorNumber() == nCurrentPartileNumber);
 
-			assert(cast(UPFrequencyTable*, kwftGranularizedTable)->Check());
 			// Test d'une granularite eligible
 			// Le nombre de partiles pour la granularite courante est il :
 			// - superieur d'au moins un facteur dRequiredIncreasingCoefficient au nombre de partiles pour
@@ -187,15 +186,16 @@ void UPDiscretizerUMODL::Discretize(KWFrequencyTable* kwftSource, KWFrequencyTab
 				// Nettoyage
 				delete kwftGranularizedTable;
 				kwftGranularizedTable = NULL;
-				assert(cast(UPFrequencyTable*, kwftMergedTable)->Check());
 				// Discretisation de la table granularisee
+				//NV
+				ensure(CheckUPFrequencyTable(kwftMergedTable));
 				DiscretizeGranularizedFrequencyTable(kwftMergedTable, kwftDiscretizedGranularizedTable);
 
 				// Memorisation du meilleur cout avec ComputeDiscretizationCost et de la granularite
 				// associee
 				dCost = ComputeDiscretizationCost(kwftDiscretizedGranularizedTable);
 
-				cout << "dcost = " << dCost << endl;
+				//NVcout << "dcost = " << dCost << endl;
 
 				// Nettoyage
 				delete kwftMergedTable;
@@ -441,7 +441,7 @@ boolean UPDiscretizerUMODL::Check() const
 	return bOk;
 }
 
-void UPDiscretizerUMODL::GranularizeFrequencyTable(KWFrequencyTable* kwftoriSource, KWFrequencyTable*& kwftoriTarget,
+void UPDiscretizerUMODL::GranularizeFrequencyTable(KWFrequencyTable* kwftSource, KWFrequencyTable*& kwftTarget,
 						   int nGranularity, KWQuantileIntervalBuilder* quantileBuilder) const
 {
 	int nInstanceNumber;
@@ -457,8 +457,6 @@ void UPDiscretizerUMODL::GranularizeFrequencyTable(KWFrequencyTable* kwftoriSour
 	UPDenseFrequencyVector* kwdfvSourceFrequencyVector;
 	IntVector* ivPartileFrequencies;
 	IntVector* ivSourceFrequencies;
-	UPFrequencyTable* kwftSource = cast(UPFrequencyTable*, kwftoriSource);
-	UPFrequencyTable* kwftTarget = cast(UPFrequencyTable*, kwftoriTarget);
 	require(0 <= nGranularity);
 
 	// Nombre d'instances de la table initiale
@@ -470,7 +468,7 @@ void UPDiscretizerUMODL::GranularizeFrequencyTable(KWFrequencyTable* kwftoriSour
 	// Cas ou la granularisation n'est pas appliquee : non prise en compte de la granularite ou granularite maximale
 	if (nGranularity == 0 or nPartileNumber >= nInstanceNumber)
 	{
-		kwftTarget = cast(UPFrequencyTable*, kwftSource->Clone());
+		kwftTarget = cast(KWFrequencyTable*, kwftSource->Clone());
 		kwftTarget->SetGranularity(nGranularity);
 		kwftTarget->SetGarbageModalityNumber(0);
 	}
@@ -502,7 +500,7 @@ void UPDiscretizerUMODL::GranularizeFrequencyTable(KWFrequencyTable* kwftoriSour
 		// Cas d'un nombre de partiles egal au nombre de valeurs distinctes (granularisation maximale)
 		if (nActualPartileNumber == nSourceValueNumber)
 		{
-			kwftTarget = cast(UPFrequencyTable*, kwftSource->Clone());
+			kwftTarget = cast(KWFrequencyTable*, kwftSource->Clone());
 			kwftTarget->SetGranularity(nGranularity);
 			kwftTarget->SetGarbageModalityNumber(0);
 		}
@@ -510,7 +508,7 @@ void UPDiscretizerUMODL::GranularizeFrequencyTable(KWFrequencyTable* kwftoriSour
 		else
 		{
 			// Creation de la table de contingence cible
-			kwftTarget = new UPFrequencyTable;
+			kwftTarget = new KWFrequencyTable;
 			//kwftTarget->SetFrequencyVectorCreator(GetFrequencyVectorCreator()->Clone());
 			kwftTarget->SetFrequencyVectorCreator(kwftSource->GetFrequencyVectorCreator()->Clone());
 			kwftTarget->SetFrequencyVectorNumber(nActualPartileNumber);
@@ -524,8 +522,6 @@ void UPDiscretizerUMODL::GranularizeFrequencyTable(KWFrequencyTable* kwftoriSour
 			// Initialisation granularite et poubelle
 			kwftTarget->SetGranularity(nGranularity);
 			kwftTarget->SetGarbageModalityNumber(0);
-			kwftTarget->SetTargetModalityNumber(kwftSource->GetTargetModalityNumber());
-			kwftTarget->SetTreatementModalityNumber(kwftSource->GetTreatementModalityNumber());
 
 			// Parcours des partiles
 			for (nPartileIndex = 0; nPartileIndex < nActualPartileNumber; nPartileIndex++)
@@ -535,12 +531,6 @@ void UPDiscretizerUMODL::GranularizeFrequencyTable(KWFrequencyTable* kwftoriSour
 				    cast(UPDenseFrequencyVector*, kwftTarget->GetFrequencyVectorAt(nPartileIndex));
 				ivPartileFrequencies = kwdfvPartileFrequencyVector->GetFrequencyVector();
 				ivPartileFrequencies->SetSize(nTargetValueNumber);
-
-				//NV init vector
-				kwdfvPartileFrequencyVector->SetTargetModalityNumber(
-				    kwftSource->GetTargetModalityNumber());
-				kwdfvPartileFrequencyVector->SetTreatementModalityNumber(
-				    kwftSource->GetTreatementModalityNumber());
 
 				// Parcours des valeurs sources
 				for (nSourceIndex = quantileBuilder->GetIntervalFirstValueIndexAt(nPartileIndex);
@@ -563,7 +553,7 @@ void UPDiscretizerUMODL::GranularizeFrequencyTable(KWFrequencyTable* kwftoriSour
 			}
 		}
 	}
-	kwftoriTarget = kwftTarget;
+
 	assert(kwftSource->GetTotalFrequency() == kwftTarget->GetTotalFrequency());
 }
 
@@ -805,7 +795,7 @@ void UPDiscretizerUMODL::MergeFrequencyTablePureIntervals(KWFrequencyTable* kwft
 	}
 
 	// Creation de la table de contingence issue de la fusion
-	kwftTarget = new UPFrequencyTable;
+	kwftTarget = new KWFrequencyTable;
 	//NV kwftTarget->SetFrequencyVectorCreator(GetFrequencyVectorCreator()->Clone());
 	kwftTarget->SetFrequencyVectorCreator(kwftSource->GetFrequencyVectorCreator()->Clone());
 	kwftTarget->SetFrequencyVectorNumber(oaFrequencies.GetSize());
@@ -813,10 +803,6 @@ void UPDiscretizerUMODL::MergeFrequencyTablePureIntervals(KWFrequencyTable* kwft
 	kwftTarget->SetGranularizedValueNumber(kwftSource->GetGranularizedValueNumber());
 	kwftTarget->SetGranularity(kwftSource->GetGranularity());
 	kwftTarget->SetGarbageModalityNumber(kwftSource->GetGarbageModalityNumber());
-	cast(UPFrequencyTable*, kwftTarget)
-	    ->SetTargetModalityNumber(cast(UPFrequencyTable*, kwftSource)->GetTargetModalityNumber());
-	cast(UPFrequencyTable*, kwftTarget)
-	    ->SetTreatementModalityNumber(cast(UPFrequencyTable*, kwftSource)->GetTreatementModalityNumber());
 
 	for (nSourceIndex = 0; nSourceIndex < kwftTarget->GetFrequencyVectorNumber(); nSourceIndex++)
 	{
@@ -824,10 +810,6 @@ void UPDiscretizerUMODL::MergeFrequencyTablePureIntervals(KWFrequencyTable* kwft
 
 		// Acces au vecteur (sense etre en representation dense)
 		kwdfvFrequencyVector = cast(UPDenseFrequencyVector*, kwftTarget->GetFrequencyVectorAt(nSourceIndex));
-		cast(UPDenseFrequencyVector*, kwdfvFrequencyVector)
-		    ->SetTargetModalityNumber(cast(UPFrequencyTable*, kwftSource)->GetTargetModalityNumber());
-		cast(UPDenseFrequencyVector*, kwdfvFrequencyVector)
-		    ->SetTreatementModalityNumber(cast(UPFrequencyTable*, kwftSource)->GetTreatementModalityNumber());
 
 		// Recopie de son contenu
 		ivFrequencyVector = kwdfvFrequencyVector->GetFrequencyVector();
@@ -926,6 +908,7 @@ KWMODLLine* UPDiscretizerUMODL::BuildIntervalListFromFrequencyTable(KWMODLLine* 
 
 	require(kwftTable != NULL);
 	require(lineCreator != NULL);
+	require(kwftTable->Check());
 
 	// Creation d'un vecteur d'index de fin d'intervalle complet: un intervalle par vecteur d'effectif de la table
 	ivIntervalLastLineIndexes.SetSize(kwftTable->GetFrequencyVectorNumber());
@@ -954,6 +937,7 @@ KWMODLLine* UPDiscretizerUMODL::BuildIntervalListFromFrequencyTableAndIntervalBo
 	require(kwftTable != NULL);
 	require(ivIntervalLastLineIndexes != NULL);
 	require(ivIntervalLastLineIndexes->GetSize() > 0);
+	require(kwftTable->Check());
 
 	// Creation des intervalles
 	// (en partant de la fin pour faciliter le chainage dans la liste)
@@ -1186,6 +1170,8 @@ KWMODLLine* UPDiscretizerUMODL::IntervalListOptimization(const KWFrequencyTable*
 	require(Check());
 	require(kwftSource != NULL);
 	require(kwftSource->GetFrequencyVectorNumber() > 1);
+	require(kwftSource->Check());
+	require(GetFrequencyVectorCreator()->GetClassLabel() == "Uplift Dense frequency vector");
 
 	// Memorisation des donnees sur la table de contingence source
 	InitializeWorkingData(kwftSource);
@@ -2505,4 +2491,49 @@ void UPDiscretizerUMODL::RemoveIntervalFromWorkingFrequencyList(KWMODLLine* inte
 int UPDiscretizerUMODL::ComputeModalityNumber(const KWFrequencyTable* kwftSource, int nFirstIndex, int LastIndex) const
 {
 	return 0;
+}
+
+void UPDiscretizerUMODL::InitFrequencyTable(KWFrequencyTable* kwftSource) const
+{
+	int i;
+	kwftSource->SetFrequencyVectorCreator(new UPDenseFrequencyVector);
+	InitFrequencyVector(kwftSource->GetFrequencyVectorCreator());
+	for (i = 0; i < kwftSource->GetFrequencyVectorNumber(); i++)
+	{
+		InitFrequencyVector(kwftSource->GetFrequencyVectorAt(i));
+	}
+}
+void UPDiscretizerUMODL::InitFrequencyVector(const KWFrequencyVector* kwfvVector) const
+{
+	require(kwfvVector->GetClassLabel() == "Uplift Dense frequency vector");
+	cast(UPDenseFrequencyVector*, kwfvVector)->SetTargetModalityNumber(nTargetModalityNumber);
+	cast(UPDenseFrequencyVector*, kwfvVector)->SetTreatementModalityNumber(nTreatementModalityNumber);
+}
+
+boolean UPDiscretizerUMODL::CheckUPFrequencyTable(KWFrequencyTable* kwftSource) const
+{
+	boolean bOk;
+	int i;
+
+	if (kwftSource->GetFrequencyVectorCreator()->GetClassLabel() != "Uplift Dense frequency vector")
+		return false;
+
+	for (i = 0; i < kwftSource->GetFrequencyVectorNumber(); i++)
+	{
+		if (CheckUPFrequencyVector(kwftSource->GetFrequencyVectorAt(i)) == false)
+			return false;
+	}
+	return true;
+}
+boolean UPDiscretizerUMODL::CheckUPFrequencyVector(const KWFrequencyVector* kwfvVector) const
+{
+	if (kwfvVector->GetClassLabel() != "Uplift Dense frequency vector")
+		return false;
+	if (cast(UPDenseFrequencyVector*, kwfvVector)->GetTargetModalityNumber() != nTargetModalityNumber)
+		return false;
+	if (cast(UPDenseFrequencyVector*, kwfvVector)->GetTreatementModalityNumber() != nTreatementModalityNumber)
+		return false;
+	if (cast(UPDenseFrequencyVector*, kwfvVector)->GetSize() != nTreatementModalityNumber * nTargetModalityNumber)
+		return false;
+	return true;
 }
