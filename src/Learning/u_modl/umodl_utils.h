@@ -6,7 +6,7 @@
 
 #include "umodlCommandLine.h"
 
-#include "KWAttribute.h"
+// #include "KWAttribute.h"
 #include "KWAttributeStats.h"
 #include "KWClass.h"
 #include "KWClassDomain.h"
@@ -167,16 +167,37 @@ KWAttribute* MakeConcatenatedAttribute(KWClass& dico, const ALString& attribOper
 void BuildRecodingClass(const KWClassDomain* initialDomain, ObjectArray* const attribStats,
 			KWClassDomain* const trainedClassDomain);
 
+// initialise un KWAttributeStats ou un UPAttributeStats a partir du nom et du type de l'attribut de variable
+// d'interet et du learningSpec du probleme.
+// calcule les stats en mode supervise de la variable chargee dans la tupletable, qui peut etre bivariate dans
+// le cas d'un KWAttributeStats, ou multivariate dans le cas d'un UPAttributeStats pour contenir l'attribut de
+// traitement en plus de l'attribut cible.
 void InitAndComputeAttributeStats(KWAttributeStats& stats, const ALString& name, const int type,
 				  KWLearningSpec& learningSpec, const KWTupleTable& table);
 
-// void InitAndComputeStats(KWAttributeStats& attribStats, const KWAttribute& attrib, KWLearningSpec& learningSpec,
-// 			 const KWTupleTable& tupleTable);
-
 ////////////////////////////////////////////////////////////////////////
+// verification de la coherence du dictionnaire des donnees avec une analyse de type uplift
+// le dictionnaire est coherent s'il satisfait les conditions suivantes :
+//    - il contient au moins 3 attributs ;
+//    - parmi les attributs, 2 sont de type categoriel et correspondent au traitement et a la cible
+//    - le ou les attributs restants sont de type numerique ou categoriel
+//
+// cette verification ne regarde pas si l'attribut de traitement et l'attribut de cible ont respectivement au
+// moins 2 valeurs distinctes qui permettent une analyse
+//
+// la fonction remplit analysableAttribs avec des references vers les attributs de variable analysables si le
+// dictionnaire en declare.
+// la fonction renvoie true si le dictionnaire est coherent, false sinon.
 bool CheckDictionnary(UMODLCommandLine& commandLine, const KWClass& dico, const ALString& attribTreatName,
 		      const ALString& attribTargetName, ObjectArray& analysableAttribs);
 
+// verification de statistiques de base des attributs traitement et cible en mode non supervise pour determiner
+// leur utilite dans le probleme d'analyse uplift.
+// l'analyse d'uplift ne peut etre realisee si ces attributs remplissent les conditions suivantes :
+//   - le traitement a au moins 2 valeurs distinctes ;
+//   - la cible a exactement 2 valeurs distinctes.
+//
+// la fonction renvoie true si les attributs satisfont les conditions pour l'analyse, false sinon
 bool CheckTreatmentAndTarget(UMODLCommandLine& commandLine, KWAttributeStats& treatStats,
 			     const ALString& attribTreatName, KWAttributeStats& targetStats,
 			     const ALString& attribTargetName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
@@ -195,7 +216,16 @@ enum class StatPreparationMode
 bool PrepareStats(const ALString& attributeName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
 		  KWTupleTable& univariate, const StatPreparationMode mode);
 
+// analyse supervisee des variables utilisees suivant le probleme d'uplift defini dans learningSpec
+// le tableau attribStats est rempli par les UPAttributeStats calcules.
+void AnalyseAllUsedVariables(ObjectArray& attribStats, const KWTupleTableLoader& tupleTableLoader,
+			     UPLearningSpec& learningSpec, const ALString& attribTreatName,
+			     const ALString& attribTargetName);
+
 ////////////////////////////////////////////////////////////////////////
+// ecriture d'un rapport sur les statistiques calculees des attributs en variable,
+// en fonction du probleme d'uplift renseigne dans learningSpec.
+// le rapport contient une partie de statistiques resumees et une partie de statistiques detaillees
 void WriteJSONReport(const ALString& sJSONReportName, const UPLearningSpec& learningSpec, ObjectArray& attribStats);
 
 ////////////////////////////////////////////////////////////////////////

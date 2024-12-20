@@ -443,6 +443,7 @@ bool CheckTreatmentAndTarget(UMODLCommandLine& commandLine, KWAttributeStats& tr
 			     const ALString& attribTargetName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
 			     KWTupleTable& univariate)
 {
+	// calcul des stats de l'attribut cible
 	loader.LoadUnivariate(attribTargetName, &univariate);
 	InitAndComputeAttributeStats(targetStats, attribTargetName, KWType::Symbol, learningSpec, univariate);
 
@@ -452,6 +453,7 @@ bool CheckTreatmentAndTarget(UMODLCommandLine& commandLine, KWAttributeStats& tr
 		return false;
 	}
 
+	// calcul des stats de l'attribut traitement
 	loader.LoadUnivariate(attribTreatName, &univariate);
 	InitAndComputeAttributeStats(treatStats, attribTreatName, KWType::Symbol, learningSpec, univariate);
 
@@ -524,6 +526,55 @@ bool PrepareStats(const ALString& attributeName, KWLearningSpec& learningSpec, K
 	}
 	loader.LoadUnivariate(attributeName, &univariate);
 	return learningSpec.ComputeTargetStats(&univariate);
+}
+
+void AnalyseAllUsedVariables(ObjectArray& attribStats, const KWTupleTableLoader& tupleTableLoader,
+			     UPLearningSpec& learningSpec, const ALString& attribTreatName,
+			     const ALString& attribTargetName)
+{
+	require(attribStats.GetSize() == 0);
+	require(tupleTableLoader.GetInputClass());
+	require(tupleTableLoader.GetInputClass()->GetAttributeNumber() >= 3);
+	require(not attribTreatName.IsEmpty());
+	require(not attribTargetName.IsEmpty());
+	require(attribTreatName != attribTargetName);
+
+	// tupletable des variables et des attributs traitement et cible
+	KWTupleTable multivariateVarUplift;
+
+	// boucle sur les attributs pour preparer les stats avant reconstruction du dictionnaire
+	StringVector svAttributeNames; // a charger dans la TupleTable
+	svAttributeNames.Initialize();
+	svAttributeNames.SetSize(3); // 3 attributs a charger : la variable a analyser, cible et traitement
+	svAttributeNames.SetAt(1, attribTargetName); //	l'attribut cible et l'attribut traitement ne
+	svAttributeNames.SetAt(2, attribTreatName);  //	changent pas entre deux analyses
+
+	const KWClass* const kwcDico = tupleTableLoader.GetInputClass();
+	for (KWAttribute* currAttrib = kwcDico->GetHeadAttribute(); currAttrib; kwcDico->GetNextAttribute(currAttrib))
+	{
+		// pas d'analyse sur le traitement ni sur la cible, analyse uniquement si la variable est declaree utilisee
+		const ALString& attribName = currAttrib->GetName();
+		if (attribName == attribTargetName or attribName == attribTreatName or not currAttrib->GetUsed())
+		{
+			continue;
+		}
+
+		// chargement multivarie : la table doit contenir la variable a anlayser, les valeurs de traitement et de cible
+		svAttributeNames.SetAt(0, attribName);
+		tupleTableLoader.LoadMultivariate(&svAttributeNames, &multivariateVarUplift);
+
+		// calcul des stats suivant le probleme d'uplift
+		UPAttributeStats* const currStats = new UPAttributeStats;
+		InitAndComputeAttributeStats(*currStats, currAttrib->GetName(), currAttrib->GetType(), learningSpec,
+					     multivariateVarUplift);
+		attribStats.Add(currStats);
+
+		//DDD
+		cout << "Attribute stats learning spec: " << currStats->GetLearningSpec() << " "
+		     << learningSpec.GetNullCost() << endl;
+	}
+
+	ensure(attribStats.GetSize() > 0);
 }
 
 void WriteJSONReport(const ALString& sJSONReportName, const UPLearningSpec& learningSpec, ObjectArray& attribStats)
