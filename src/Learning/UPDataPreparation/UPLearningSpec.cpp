@@ -406,9 +406,7 @@ void UPLearningSpec::ComputeNullCost()
 	KWDiscretizerMODL discretizerMODL;
 	KWDiscretizerMODLFamily* discretizerMODLFamily;
 	KWDataGrid nullDataGrid;
-	KWDGPart* nullPart;
 	ObjectArray oaParts;
-	KWDGCell* nullCell;
 	KWDataGridRegressionCosts nullRegressionCost;
 	KWFrequencyTable nullFrequencyTable;
 	KWFrequencyTable* kwftNullPreparedTable;
@@ -504,7 +502,6 @@ void UPLearningSpec::InitFrequencyVector(const KWFrequencyVector* kwfvVector)
 
 boolean UPLearningSpec::CheckFrequencyTable(KWFrequencyTable* kwftSource)
 {
-	boolean bOk;
 	int i;
 
 	if (kwftSource->GetFrequencyVectorCreator()->GetClassLabel() != "Uplift Dense frequency vector")

@@ -2477,7 +2477,6 @@ void UPGrouperUMODL::InitFrequencyVector(const KWFrequencyVector* kwfvVector) co
 
 boolean UPGrouperUMODL::CheckUPFrequencyTable(KWFrequencyTable* kwftSource) const
 {
-	boolean bOk;
 	int i;
 
 	if (kwftSource->GetFrequencyVectorCreator()->GetClassLabel() != "Uplift Dense frequency vector")

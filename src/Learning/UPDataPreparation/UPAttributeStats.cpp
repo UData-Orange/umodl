@@ -84,8 +84,6 @@ boolean UPAttributeStats::ComputeStats(const KWTupleTable* tupleTable)
 	require(GetAttributeType() != KWType::Unknown);
 	require(GetLearningSpec()->GetClassLabel() == "Uplift Learning specification");
 
-	UPLearningSpec* uplearningspec = cast(UPLearningSpec*, GetLearningSpec());
-
 	// Nettoyage des donnees de preparation
 	CleanDataPreparationResults();
 	bIsStatsComputed = true;
@@ -1672,9 +1670,6 @@ void UPAttributeStats::BuildInitialFrequencyTable(const KWTupleTable* tupleTable
 	Symbol sRef;
 	UPDenseFrequencyVector* kwdfvFrequencyVector;
 	IntVector* ivFrequencyVector;
-	UPDenseFrequencyVector* kwdfvSourceFrequencyVector;
-	KWFrequencyTable* resultTable;
-	IntVector* ivSourceFrequencies;
 	UPLearningSpec* uplearningspec;
 	int nTreatementValueNumber;
 	int nTreatementIndex;

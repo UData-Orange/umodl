@@ -89,8 +89,6 @@ void UPDiscretizerUMODL::Discretize(KWFrequencyTable* kwftSource, KWFrequencyTab
 	kwftGranularizedTable = NULL;
 	kwftDiscretizedGranularizedTable = NULL;
 
-	UPDenseFrequencyVector* vect = cast(UPDenseFrequencyVector*, discretizationCosts->GetFrequencyVectorCreator());
-
 	// Cas d'une base vide
 	if (nInstanceNumber == 0 or kwftSource->GetFrequencyVectorNumber() == 1)
 		kwftTarget = kwftSource->Clone();
@@ -2512,7 +2510,6 @@ void UPDiscretizerUMODL::InitFrequencyVector(const KWFrequencyVector* kwfvVector
 
 boolean UPDiscretizerUMODL::CheckUPFrequencyTable(KWFrequencyTable* kwftSource) const
 {
-	boolean bOk;
 	int i;
 
 	if (kwftSource->GetFrequencyVectorCreator()->GetClassLabel() != "Uplift Dense frequency vector")
