@@ -16,91 +16,6 @@
 #include "UPDiscretizerUMODL.h"
 #include "UPGrouperUMODL.h"
 
-ALString PrepareName(const ALString& name)
-{
-	ALString res = name.Left(min(name.GetLength(), 30));
-	res.TrimRight();
-	return res;
-}
-
-KWDerivationRuleOperand* MakeSymbolOperand(int origin)
-{
-	KWDerivationRuleOperand* const res = new KWDerivationRuleOperand;
-	check(res);
-	res->SetType(KWType::Symbol);
-	res->SetOrigin(origin);
-	return res;
-}
-
-KWDerivationRuleOperand* MakeConcatOperand(const ALString& attribName)
-{
-	KWDerivationRuleOperand* const res = MakeSymbolOperand(KWDerivationRuleOperand::OriginAttribute);
-	res->SetAttributeName(attribName);
-	return res;
-}
-
-KWDerivationRuleOperand* MakeSeparatorOperand()
-{
-	KWDerivationRuleOperand* const res = MakeSymbolOperand(KWDerivationRuleOperand::OriginConstant);
-	res->SetSymbolConstant("_");
-	return res;
-}
-
-bool InitConcatAttrib(KWAttribute& toInit, const ALString& attribOperand1, const ALString attribOperand2)
-{
-	const ALString sNameOperand1 = PrepareName(attribOperand1);
-	if (sNameOperand1.IsEmpty())
-	{
-		toInit.AddError("Trimming of attribute name " + attribOperand1 + " returned an empty string.");
-		return false;
-	}
-	const ALString sNameOperand2 = PrepareName(attribOperand2);
-	if (sNameOperand2.IsEmpty())
-	{
-		toInit.AddError("Trimming of attribute name " + attribOperand2 + " returned an empty string.");
-		return false;
-	}
-	toInit.SetName(sNameOperand1 + "_" + sNameOperand2);
-
-	// add derivation rule
-	KWDRConcat* const concatRule = new KWDRConcat;
-	check(concatRule);
-	concatRule->DeleteAllOperands();
-	concatRule->AddOperand(MakeConcatOperand(attribOperand1));
-	concatRule->AddOperand(MakeSeparatorOperand());
-	concatRule->AddOperand(MakeConcatOperand(attribOperand2));
-	// concatRule->SetClassName(className);
-
-	KWDerivationRule::RegisterDerivationRule(concatRule);
-
-	toInit.SetDerivationRule(concatRule);
-	toInit.SetType(concatRule->GetType());
-	// toInit.SetLoaded(false);
-	toInit.SetCost(1.0);
-
-	return true;
-}
-
-KWAttribute* MakeConcatenatedAttribute(KWClass& dico, const ALString& attribOperand1, const ALString attribOperand2)
-{
-	require(not attribOperand1.IsEmpty() and not attribOperand2.IsEmpty());
-
-	KWAttribute* const concatAttrib = new KWAttribute;
-	if (not concatAttrib)
-	{
-		return nullptr;
-	}
-
-	if (not InitConcatAttrib(*concatAttrib, attribOperand1, attribOperand2))
-	{
-		delete concatAttrib;
-		return nullptr;
-	}
-
-	concatAttrib->CompleteTypeInfo(&dico);
-	return concatAttrib;
-}
-
 // adaptation de BuildRecodingClass pour un parametre d'entree de type ObjectArray
 // parametre attribStats est un object array de KWAttributeStats
 void BuildRecodingClass(const KWClassDomain* initialDomain, ObjectArray* const attribStats,
@@ -344,30 +259,8 @@ void InitAndComputeAttributeStats(KWAttributeStats& stats, const ALString& name,
 	stats.ComputeStats(&table);
 }
 
-// void InitAndComputeStats(KWAttributeStats& attribStats, const KWAttribute& attrib, KWLearningSpec& learningSpec,
-// 			 const KWTupleTable& tupleTable)
-// {
-// 	attribStats.SetLearningSpec(&learningSpec);
-// 	attribStats.SetAttributeName(attrib.GetName());
-// 	attribStats.SetAttributeType(attrib.GetType());
-// 	attribStats.ComputeStats(&tupleTable);
-// }
-
-void WriteDictionnary(JSONFile& file, const ALString& key, const ObjectArray& attribsUpliftStats, const bool summary)
-{
-	file.BeginKeyArray(key);
-	for (int i = 0; i < attribsUpliftStats.GetSize(); i++)
-	{
-		UPAttributeStats* currAttribStats = cast(UPAttributeStats*, attribsUpliftStats.GetAt(i));
-		file.BeginKeyObject(currAttribStats->GetIdentifier());
-		currAttribStats->WriteJSONArrayFields(&file, summary);
-		file.EndObject();
-	}
-	file.EndArray();
-}
-
-bool CheckDictionnary(UMODLCommandLine& commandLine, const KWClass& dico, const ALString& attribTreatName,
-		      const ALString& attribTargetName, ObjectArray& analysableAttribs)
+bool CheckDictionary(UMODLCommandLine& commandLine, const KWClass& dico, const ALString& attribTreatName,
+		     const ALString& attribTargetName, ObjectArray& analysableAttribs)
 {
 	require(analysableAttribs.GetSize() == 0);
 	require(not attribTreatName.IsEmpty());
@@ -438,94 +331,44 @@ bool CheckDictionnary(UMODLCommandLine& commandLine, const KWClass& dico, const 
 	return res;
 }
 
-bool CheckTreatmentAndTarget(UMODLCommandLine& commandLine, KWAttributeStats& treatStats,
-			     const ALString& attribTreatName, KWAttributeStats& targetStats,
-			     const ALString& attribTargetName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
-			     KWTupleTable& univariate)
+void ComputeTreamentAndTargetStats(const KWTupleTableLoader& loader, UPLearningSpec& learningSpec,
+				   const ALString& attribTreatName, const ALString& attribTargetName)
 {
-	// calcul des stats de l'attribut cible
-	loader.LoadUnivariate(attribTargetName, &univariate);
-	InitAndComputeAttributeStats(targetStats, attribTargetName, KWType::Symbol, learningSpec, univariate);
-
-	if (GetValueNumber(targetStats) != 2)
-	{
-		commandLine.AddError("Target attribute does not have 2 distinct values, unable to analyse.");
-		return false;
-	}
-
-	// calcul des stats de l'attribut traitement
+	KWTupleTable univariate;
 	loader.LoadUnivariate(attribTreatName, &univariate);
-	InitAndComputeAttributeStats(treatStats, attribTreatName, KWType::Symbol, learningSpec, univariate);
+	learningSpec.ComputeTreatementStats(&univariate);
 
-	if (GetValueNumber(treatStats) < 2)
+	loader.LoadUnivariate(attribTargetName, &univariate);
+	learningSpec.ComputeTargetStats(&univariate);
+}
+
+bool CheckCategoricalAttributeConsistency(UMODLCommandLine& commandLine, KWDataGridStats* const attribValueStats)
+{
+	require(attribValueStats);
+	require(attribValueStats->GetAttributeNumber() > 0);
+
+	const KWDGSAttributePartition* const attrib = attribValueStats->GetAttributeAt(0);
+	if (not attrib)
 	{
-		commandLine.AddError(
-		    "Treatment attribute does not have at least 2 two distinct values, unable to analyse.");
+		commandLine.AddError("Unable to check attribute.");
 		return false;
 	}
 
-	return true;
-}
-
-bool CheckAnalysableAttributes(UMODLCommandLine& commandLine, const ObjectArray& analysableAttribsInput,
-			       ObjectArray& analysableAttributeStatsArrOutput, KWLearningSpec& learningSpec,
-			       KWTupleTableLoader& loader, KWTupleTable& univariate)
-{
-	require(analysableAttribsInput.GetSize() > 0);
-	require(analysableAttributeStatsArrOutput.GetSize() == 0);
-
-	IntVector toSuppress;
-	for (int i = 0; i < analysableAttribsInput.GetSize(); i++)
+	// pour permettre une analyse d'uplift, les attributs traitement et cible doivent :
+	//   - etre de type categoriel
+	//   - avoir au moins 2 valeurs distinctes
+	bool consistent = true;
+	if (attrib->GetAttributeType() != KWType::Symbol)
 	{
-		const KWAttribute* const currAttrib = cast(KWAttribute*, analysableAttribsInput.GetAt(i));
-		KWAttributeStats* const attribStats = new KWAttributeStats;
-		if (not attribStats)
-		{
-			return false;
-		}
-
-		loader.LoadUnivariate(currAttrib->GetName(), &univariate);
-		InitAndComputeAttributeStats(*attribStats, currAttrib->GetName(), currAttrib->GetType(), learningSpec,
-					     univariate);
-
-		if (GetValueNumber(*attribStats) > 1)
-		{
-			analysableAttributeStatsArrOutput.Add(attribStats);
-		}
-		else
-		{
-			toSuppress.Add(i);
-			delete attribStats;
-		}
+		commandLine.AddError("Attribute should be categorical.");
+		consistent = false;
 	}
-	for (int i = 0; i < toSuppress.GetSize(); i++)
+	if (attrib->GetInitialValueNumber() < 2)
 	{
-		analysableAttributeStatsArrOutput.RemoveAt(toSuppress.GetAt(i));
+		commandLine.AddError("Attribute should have at least 2 different values.");
+		consistent = false;
 	}
-
-	// verifier qu'il y a bien au moins un attribut analysable
-	if (analysableAttributeStatsArrOutput.GetSize() == 0)
-	{
-		commandLine.AddError("No attribute to analyse.");
-		return false;
-	}
-
-	return true;
-}
-
-bool PrepareStats(const ALString& attributeName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
-		  KWTupleTable& univariate, const StatPreparationMode mode)
-{
-	if (mode == StatPreparationMode::Supervised)
-	{
-		learningSpec.SetTargetAttributeName(attributeName);
-	}
-	else
-	{
-		learningSpec.SetTargetAttributeName("");
-	}
-	loader.LoadUnivariate(attributeName, &univariate);
-	return learningSpec.ComputeTargetStats(&univariate);
+	return consistent;
 }
 
 void AnalyseAllUsedVariables(ObjectArray& attribStats, const KWTupleTableLoader& tupleTableLoader,

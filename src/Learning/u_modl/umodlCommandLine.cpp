@@ -96,20 +96,18 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 void UMODLCommandLine::ShowHelp()
 {
 	cout << "Usage: " << GetClassLabel()
-	     << " [VALUES] [DICTIONNARY] [CLASS] [TREATMENT] [TARGET] [RECODED KDIC] [REPORT JSON]\n ";
-	// cout << "Compute uplift statistics from the data in VALUES.\n";
-	// cout << "A recoded dictionnary is output in OUTPUT file, with the lower bound, upper bound,\n";
-	// cout << "  length, frequency, probability and density per bin.\n ";
-	// cout << "A report of the statistics of the variables is output as a JSON file in RECODED.json or in REPORT.json if the argument is passed to the program.\n";
+	     << " [VALUES] [DICTIONARY] [CLASS] [TREATMENT] [TARGET] [RECODED KDIC] [REPORT JSON]\n"
+	     << "Compute uplift statistics from the data in VALUES.\n"
+	     << "DICTIONARY describes the names and types of the attributes of the associated data in VALUES.\n"
+	     << "CLASS declares the name of the class in DICTIONARY corresponding to the data in VALUES.\n"
+	     << "TREATMENT and TARGET declare which attributes in DICTIONARY are used as the treatment attribute\n"
+	     << "and the target target attribute for the uplift analysis.\n"
+	     << "A recoded dictionary is output in RECODED.kdic.\n"
+	     << "A report of the statistics of the variables is output as a JSON file in RECODED.json or in "
+		"REPORT.json\n"
+	     << "if the argument is passed to the program.\n";
 
 	// Options generales
-	cout << "\t-h\tdisplay this help and exit\n";
-	cout << "\t-v\tdisplay version information and exit\n";
-
-	// Aide additionnelle
-	// cout << "\n";
-	// cout << "The output histogram is as accurate and interpretable as possible.\n";
-	// cout << " Each histogram of the series uses an index in its suffix(e.g. \".1\"), and an additional file\n";
-	// cout << " with the suffix \".series\" is produced, with indicators per histogram.\n";
-	// cout << "The -j option can be combined with the -e option to get all outputs in one file.\n";
+	cout << "\t-h\tdisplay this help and exit\n"
+	     << "\t-v\tdisplay version information and exit\n";
 }

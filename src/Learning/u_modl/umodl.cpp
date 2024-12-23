@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 	// au moins un des autres attributs est numerique ou categoriel
 	ObjectArray analysableAttribs;
 
-	if (not CheckDictionnary(commandLine, *kwcDico, attribTreatName, attribTargetName, analysableAttribs))
+	if (not CheckDictionary(commandLine, *kwcDico, attribTreatName, attribTargetName, analysableAttribs))
 	{
 		commandLine.AddError("Loaded dictionnary cannot be analysed.");
 		cleaner();
@@ -131,17 +131,24 @@ int main(int argc, char** argv)
 	///////////////////////////////////////////////////////////////////////
 	// mode supervise
 
-	KWTupleTable univariate;
-	tupleTableLoader.LoadUnivariate(attribTreatName, &univariate);
-
-	learningSpec.ComputeTreatementStats(&univariate);
-	cout << "nb valeur traitement : "
-	     << learningSpec.GetTreatementValueStats()->GetAttributeAt(0)->GetInitialValueNumber() << endl;
-
 	// calcul des stats de base de la cible
+	ComputeTreamentAndTargetStats(tupleTableLoader, learningSpec, attribTreatName, attribTargetName);
 
-	tupleTableLoader.LoadUnivariate(attribTargetName, &univariate);
-	learningSpec.ComputeTargetStats(&univariate);
+	// verification des valeurs de traitement
+	if (not CheckCategoricalAttributeConsistency(commandLine, learningSpec.GetTreatementValueStats()))
+	{
+		cout << "Treatment attribute is not consistent for uplift analysis.\n";
+		cleaner();
+		return EXIT_FAILURE;
+	}
+
+	// verification des valeurs de cible
+	if (not CheckCategoricalAttributeConsistency(commandLine, learningSpec.GetTargetValueStats()))
+	{
+		cout << "Target attribute is not consistent for uplift analysis.\n";
+		cleaner();
+		return EXIT_FAILURE;
+	}
 
 	//DDD
 	cout << "Initial learning spec 2: " << &learningSpec << " " << learningSpec.GetNullPreparationCost() << endl;

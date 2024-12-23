@@ -157,11 +157,6 @@ inline int GetValueNumber(KWAttributeStats& attStats)
 }
 
 ////////////////////////////////////////////////////////////////////////
-// fonction d'aide a la creation d'un nouvel attribut de type categoriel
-// a partir de la concatenation de deux autres attributs categoriels
-KWAttribute* MakeConcatenatedAttribute(KWClass& dico, const ALString& attribOperand1, const ALString attribOperand2);
-
-////////////////////////////////////////////////////////////////////////
 // adaptation de BuildRecodingClass pour un parametre d'entree de type ObjectArray
 // parametre attribStats est un object array de KWAttributeStats
 void BuildRecodingClass(const KWClassDomain* initialDomain, ObjectArray* const attribStats,
@@ -188,33 +183,20 @@ void InitAndComputeAttributeStats(KWAttributeStats& stats, const ALString& name,
 // la fonction remplit analysableAttribs avec des references vers les attributs de variable analysables si le
 // dictionnaire en declare.
 // la fonction renvoie true si le dictionnaire est coherent, false sinon.
-bool CheckDictionnary(UMODLCommandLine& commandLine, const KWClass& dico, const ALString& attribTreatName,
-		      const ALString& attribTargetName, ObjectArray& analysableAttribs);
+bool CheckDictionary(UMODLCommandLine& commandLine, const KWClass& dico, const ALString& attribTreatName,
+		     const ALString& attribTargetName, ObjectArray& analysableAttribs);
 
-// verification de statistiques de base des attributs traitement et cible en mode non supervise pour determiner
-// leur utilite dans le probleme d'analyse uplift.
-// l'analyse d'uplift ne peut etre realisee si ces attributs remplissent les conditions suivantes :
-//   - le traitement a au moins 2 valeurs distinctes ;
-//   - la cible a exactement 2 valeurs distinctes.
+// calcul des stats de base des attributs de traitement et de cible
+void ComputeTreamentAndTargetStats(const KWTupleTableLoader& loader, UPLearningSpec& learningSpec,
+				   const ALString& attribTreatName, const ALString& attribTargetName);
+
+// verification de la coherence des valeurs de l'attribut traitement ou cible pour l'analyse d'uplift
+// l'attribut analyse est coherent et permet l'analyse si :
+//   - il est de type categoriel
+//   - il a moins 2 valeurs differentes
 //
-// la fonction renvoie true si les attributs satisfont les conditions pour l'analyse, false sinon
-bool CheckTreatmentAndTarget(UMODLCommandLine& commandLine, KWAttributeStats& treatStats,
-			     const ALString& attribTreatName, KWAttributeStats& targetStats,
-			     const ALString& attribTargetName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
-			     KWTupleTable& univariate);
-
-bool CheckAnalysableAttributes(UMODLCommandLine& commandLine, const ObjectArray& analysableAttribsInput,
-			       ObjectArray& analysableAttributeStatsArrOutput, KWLearningSpec& learningSpec,
-			       KWTupleTableLoader& loader, KWTupleTable& univariate);
-
-enum class StatPreparationMode
-{
-	Unsupervised,
-	Supervised
-};
-
-bool PrepareStats(const ALString& attributeName, KWLearningSpec& learningSpec, KWTupleTableLoader& loader,
-		  KWTupleTable& univariate, const StatPreparationMode mode);
+// renvoie true si l'attribut est coherent, false sinon
+bool CheckCategoricalAttributeConsistency(UMODLCommandLine& commandLine, KWDataGridStats* const attribValueStats);
 
 // analyse supervisee des variables utilisees suivant le probleme d'uplift defini dans learningSpec
 // le tableau attribStats est rempli par les UPAttributeStats calcules.

@@ -14,16 +14,17 @@
 class UMODLCommandLine : public Object
 {
 public:
+	// classe d'agregation des arguments passes en ligne de commande
 	class Arguments : public Object
 	{
 	public:
-		ALString dataFileName;
-		ALString domainFileName;
-		ALString className;
-		ALString attribTreatName;
-		ALString attribTargetName;
-		ALString outputFileName;
-		ALString reportJSONFileName;
+		ALString dataFileName;       // nom du fichier contenant la base de donnees
+		ALString domainFileName;     // nom du fichier dictionnaire .kdic
+		ALString className;          // nom de la classe d'interet dans le dictionnaire
+		ALString attribTreatName;    // nom de l'attribut traitement du probleme d'uplift
+		ALString attribTargetName;   // nom de l'attribut cible du probleme d'uplift
+		ALString outputFileName;     // nom du fichier .kdic pour l'ecriture du dictionnaire recode
+		ALString reportJSONFileName; // nom du fichier .json pour l'ecriture des statistiques calculees
 	};
 
 	// Initialisation des parametres
