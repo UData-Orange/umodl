@@ -1,4 +1,4 @@
-// Copyright (c) 2024 Orange. All rights reserved.
+// Copyright (c) 2025 Orange. All rights reserved.
 // This software is distributed under the BSD 3-Clause-clear License, the text of which is available
 // at https://spdx.org/licenses/BSD-3-Clause-Clear.html or see the "LICENSE" file for more details.
 
@@ -11,7 +11,6 @@
 //// de groupage MODL
 
 class UPGrouperUMODLTwoClasses;
-
 
 #include "UPDiscretizerUMODL.h"
 #include "KWStat.h"
@@ -181,7 +180,6 @@ protected:
 	// mutable car modifiee par methode Set/Reset-WorkingFrequencyList qui sont const
 	mutable SortedList* workingFrequencyList;
 };
-
 
 // Methodes en inline
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2024 Orange. All rights reserved.
+// Copyright (c) 2025 Orange. All rights reserved.
 // This software is distributed under the BSD 3-Clause-clear License, the text of which is available
 // at https://spdx.org/licenses/BSD-3-Clause-Clear.html or see the "LICENSE" file for more details.
 
@@ -21,7 +21,7 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 		if (sArgument == "-v")
 		{
 			std::cout << GetClassLabel() << " " << UMODL_VERSION << "\n "
-				  << "Copyright (C) 2024 Orange labs\n";
+				  << "Copyright (C) 2025 Orange labs\n";
 			return false;
 		}
 		// Aide
