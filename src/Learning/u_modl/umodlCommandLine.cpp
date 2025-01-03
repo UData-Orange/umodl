@@ -33,7 +33,7 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 	}
 
 	// Test du bon nombre d'options
-	if (argc != 7 and argc != 8)
+	if (argc != 6)
 	{
 		const ALString& classLabel = GetClassLabel();
 		ALString errMsg =
@@ -48,68 +48,78 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 	res.className = argv[3];
 	res.attribTreatName = argv[4];
 	res.attribTargetName = argv[5];
-	res.outputFileName = argv[6];
-	if (res.dataFileName == res.domainFileName or res.dataFileName == res.outputFileName or
-	    res.domainFileName == res.outputFileName)
+
+	if (res.dataFileName == res.domainFileName)
 	{
-		std::cout << "All file names must be different.\n";
+		std::cout << "The two file names must be different.\n";
 		return false;
 	}
 
 	if (res.attribTreatName == res.attribTargetName)
 	{
-		std::cout << "Treatment and Target attributes must be different.\n";
+		std::cout << "Treatment and Target variables must be different.\n";
 		return false;
 	}
 
-	// preparation du nom de fichier pour le rapport json
-	ALString& reportFileNameToCheck = (argc == 8) ? res.reportJSONFileName : res.domainFileName;
-	if (argc == 8)
-	{
-		res.reportJSONFileName = argv[7];
-	}
-	//verification de l'extension
-	const int extPos = reportFileNameToCheck.ReverseFind('.');
+	// verification de l'extension du fichier dictionnaire
+	const int extPos = res.domainFileName.ReverseFind('.');
 	if (extPos <= 0)
 	{
-		AddError("Cannot create JSON report, filename without consistent extension.");
+		AddError("Argument for dictionary filename has no extension.");
 		return false;
 	}
-	// verification de l'extension :
-	//   - si le nom de fichier pour le rapport est dans les arguments, .json est attendu ;
-	//   - si le nom de fichier pour le rapport est manquant, le nom du dictionnaire est repris
-	//      .kdic est attendu.
-	const ALString fileExt = reportFileNameToCheck.Right(reportFileNameToCheck.GetLength() - extPos);
-	if ((&reportFileNameToCheck == &(res.domainFileName) and fileExt != ".kdic") or
-	    (&reportFileNameToCheck == &(res.reportJSONFileName) and fileExt != ".json"))
+	const ALString fileExt = res.domainFileName.Right(res.domainFileName.GetLength() - extPos);
+	if (fileExt != ".kdic")
 	{
-		AddError("Cannot create JSON report, inconsistent file extension.");
+		AddError("Extension in argument for dictionary filename is not consistent, i.e. not .kdic.");
 		return false;
 	}
-	// modification du nom si pas d'argument pour le nom du fichier de rapport
-	if (argc == 7)
+
+	// preparation des noms de fichier pour le dictionnaire recode et le rapport json
+	// leur nom suit le schema <path jusqu'au dernier separateur>UP_<nom du fichier dictionnaire><extension>
+
+	// trouver le dernier separateur dans le nom de fichier, s'il y en a un
+	// separateur type windows ?
+	int separatorPos = res.domainFileName.ReverseFind('\\');
+	if (separatorPos < 0)
 	{
-		res.reportJSONFileName = res.domainFileName.Left(extPos) + ".json";
+		// separateur type POSIX ?
+		separatorPos = res.domainFileName.ReverseFind('/');
 	}
+	if (separatorPos < 0)
+	{
+		// path relatif sans separateur
+		separatorPos = -1;
+	}
+
+	// path jusqu'au dernier repertoire
+	const ALString filePath = res.domainFileName.Left(separatorPos + 1);
+	// nom du fichier sans le path ni l'extension
+	const ALString fileShortName = res.domainFileName.Mid(separatorPos + 1, extPos - (separatorPos + 1));
+	// prefix des nouveaux fichiers de resultat
+	const ALString filePrefix = filePath + "UP_" + fileShortName;
+	// fichiers de resultat
+	res.outputFileName = filePrefix + ".kdic";
+	res.reportJSONFileName = filePrefix + ".json";
 
 	return true;
 }
 
 void UMODLCommandLine::ShowHelp()
 {
-	cout << "Usage: " << GetClassLabel()
-	     << " [VALUES] [DICTIONARY] [CLASS] [TREATMENT] [TARGET] [RECODED KDIC] [REPORT JSON]\n"
-	     << "Compute uplift statistics from the data in VALUES.\n"
-	     << "DICTIONARY describes the names and types of the attributes of the associated data in VALUES.\n"
-	     << "CLASS declares the name of the class in DICTIONARY corresponding to the data in VALUES.\n"
-	     << "TREATMENT and TARGET declare which attributes in DICTIONARY are used as the treatment attribute\n"
-	     << "and the target target attribute for the uplift analysis.\n"
-	     << "A recoded dictionary is output in RECODED.kdic.\n"
-	     << "A report of the statistics of the variables is output as a JSON file in RECODED.json or in "
-		"REPORT.json\n"
-	     << "if the argument is passed to the program.\n";
+	cout << "Usage: " << GetClassLabel() << " [DATAFILENAME] [DICTIONARY.kdic] [CLASS] [TREATMENT] [TARGET]\n"
+	     << "Compute uplift statistics from the data in DATAFILENAME.\n"
+	     << "DICTIONARY.kdic describes the names and types of the variables of the associated data in "
+		"DATAFILENAME.\n"
+	     << "CLASS declares the name of the class in DICTIONARY.kdic corresponding to the data in DATAFILENAME.\n"
+	     << "TREATMENT and TARGET declare which variables in DICTIONARY.kdic are used as the uplift treatment "
+		"variable\n"
+	     << "and the target variable for the uplift analysis.\n"
+	     << "A recoded dictionary is output in UP_DICTIONARY.kdic.\n"
+	     << "A report of the statistics of the variables is output as a JSON file in UP_DICTIONARY.json.\n";
 
 	// Options generales
-	cout << "\t-h\tdisplay this help and exit\n"
+	cout << '\n'
+	     << "\t-h\tdisplay this help and exit\n"
 	     << "\t-v\tdisplay version information and exit\n";
 }
