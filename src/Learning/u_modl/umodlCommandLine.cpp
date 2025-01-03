@@ -75,8 +75,10 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 		AddError("Cannot create JSON report, filename without consistent extension.");
 		return false;
 	}
-	// verification de l'extension : .json attendu si nom de fichier en argument,
-	// .kdic pour le dictionnaire si pas de nom de fichier pour le rapport
+	// verification de l'extension :
+	//   - si le nom de fichier pour le rapport est dans les arguments, .json est attendu ;
+	//   - si le nom de fichier pour le rapport est manquant, le nom du dictionnaire est repris
+	//      .kdic est attendu.
 	const ALString fileExt = reportFileNameToCheck.Right(reportFileNameToCheck.GetLength() - extPos);
 	if ((&reportFileNameToCheck == &(res.domainFileName) and fileExt != ".kdic") or
 	    (&reportFileNameToCheck == &(res.reportJSONFileName) and fileExt != ".json"))

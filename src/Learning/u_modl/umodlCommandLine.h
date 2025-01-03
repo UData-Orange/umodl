@@ -10,7 +10,7 @@
 
 ////////////////////////////////////////////////////////////////
 // Classe UMODLCommandLine
-// Lancement du calcul d'un histogramme de puis la ligne de commande
+// Lancement du calcul de l'analyse d'un probleme d'uplift depuis la ligne de commande
 class UMODLCommandLine : public Object
 {
 public:
@@ -23,7 +23,7 @@ public:
 		ALString className;          // nom de la classe d'interet dans le dictionnaire
 		ALString attribTreatName;    // nom de l'attribut traitement du probleme d'uplift
 		ALString attribTargetName;   // nom de l'attribut cible du probleme d'uplift
-		ALString outputFileName;     // nom du fichier .kdic pour l'ecriture du dictionnaire recode
+		ALString outputFileName;     // nom du fichier pour l'ecriture du dictionnaire recode
 		ALString reportJSONFileName; // nom du fichier .json pour l'ecriture des statistiques calculees
 	};
 
