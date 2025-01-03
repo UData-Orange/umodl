@@ -76,15 +76,6 @@ int main(int argc, char** argv)
 	}
 	currentDomainPtr->Compile();
 
-	// verification visuelle de quelques elements du dictionnaire
-	kwcDico->Write(std::cout);
-	currentDomainPtr->Write(std::cout);
-
-	kwcDico->GetDomain()->Write(std::cout);
-
-	std::cout << kwcDico->GetName() << '\n';
-	std::cout << "nombre attribut :" << kwcDico->GetAttributeNumber() << '\n';
-
 	// lecture de la base de donnees
 	KWSTDatabaseTextFile readDatabase;
 	readDatabase.SetClassName(sClassName);
@@ -99,8 +90,6 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 	cleaner.m_readDatabase = &readDatabase;
-
-	std::cout << "GetExactObjectNumber :" << readDatabase.GetExactObjectNumber() << '\n';
 
 	// Enregistrement des methodes de pretraitement supervisees et non supervisees
 	RegisterDiscretizers();
@@ -125,9 +114,6 @@ int main(int argc, char** argv)
 	learningSpec.SetTargetAttributeName(attribTargetName);
 	learningSpec.SetTreatementAttributeName(attribTreatName);
 
-	//DDD
-	cout << "Initial learning spec: " << &learningSpec << endl;
-
 	///////////////////////////////////////////////////////////////////////
 	// mode supervise
 
@@ -150,10 +136,6 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	//DDD
-	cout << "Initial learning spec 2: " << &learningSpec << " " << learningSpec.GetNullPreparationCost() << endl;
-	cout << "Initial learning spec 3: " << &learningSpec << " " << learningSpec.GetNullCost() << endl;
-
 	// accumulation des stats d'attribut par calcul supervise selon le traitement et la cible
 	ObjectArray attribStats;
 	AnalyseAllUsedVariables(attribStats, tupleTableLoader, learningSpec, attribTreatName, attribTargetName);
@@ -170,8 +152,6 @@ int main(int argc, char** argv)
 
 	// nettoyage des UPAttributeStats crees par AnalyseAllUsedVariables
 	attribStats.DeleteAll();
-
-	std::cout << "fin  test" << endl;
 
 	cleaner();
 	return EXIT_SUCCESS;
