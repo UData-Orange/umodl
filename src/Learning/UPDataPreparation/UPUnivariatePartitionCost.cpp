@@ -180,6 +180,98 @@ double UPMODLDiscretizationCosts::ComputePartCost(const KWFrequencyVector* part)
 	return ((dCost0) < (dCost1) ? (dCost0) : (dCost1));
 }
 
+int UPMODLDiscretizationCosts::ComputePartCostW(const KWFrequencyVector* part) const
+{
+	require(part->GetClassLabel() == GetFrequencyVectorCreator()->GetClassLabel());
+
+	IntVector* ivFrequencyVector;
+	double dCost0, dCost1;
+	int nFrequency;
+	int nIntervalFrequency;
+	int nTreatementModalityNumber;
+	int nTargetModalityNumber;
+	int i, j;
+
+	require(part != NULL);
+	require(nClassValueNumber > 1);
+	//require(cast(UPDenseFrequencyVector*, part)->GetObjectLabel() == "Uplift Dense frequency vector");
+
+	// Acces aux compteurs du vecteur d'effectif dense
+	ivFrequencyVector = cast(UPDenseFrequencyVector*, part)->GetFrequencyVector();
+	nTreatementModalityNumber = cast(UPDenseFrequencyVector*, part)->GetTreatementModalityNumber();
+	nTargetModalityNumber = cast(UPDenseFrequencyVector*, part)->GetTargetModalityNumber();
+	require(nTreatementModalityNumber > 1);
+	require(ivFrequencyVector->GetSize() == nTreatementModalityNumber * nTargetModalityNumber);
+
+	// Cout de codage des instances de la ligne et de la loi multinomiale de la ligne W=1
+	dCost1 = 0;
+	nIntervalFrequency = 0;
+	for (i = 0; i < ivFrequencyVector->GetSize(); i++)
+	{
+		nFrequency = ivFrequencyVector->GetAt(i);
+		dCost1 -= KWStat::LnFactorial(nFrequency);
+		nIntervalFrequency += nFrequency;
+	}
+	dCost1 += KWStat::LnFactorial(nIntervalFrequency + nTargetModalityNumber - 1);
+	dCost1 -= KWStat::LnFactorial(nTargetModalityNumber - 1);
+
+	// Cout de codage des instances de la ligne et de la loi multinomiale de la ligne W=0
+
+	dCost0 = 0;
+
+	for (i = 0; i < nTreatementModalityNumber; i++)
+	{
+		nIntervalFrequency = 0;
+		for (j = 0; j < nTargetModalityNumber; j++)
+		{
+			nFrequency = ivFrequencyVector->GetAt(j + i * nTargetModalityNumber);
+			dCost0 -= KWStat::LnFactorial(nFrequency);
+			nIntervalFrequency += nFrequency;
+		}
+		dCost0 += KWStat::LnFactorial(nIntervalFrequency + nTargetModalityNumber - 1);
+		dCost0 -= KWStat::LnFactorial(nTargetModalityNumber - 1);
+	}
+
+	return ((dCost0) < (dCost1) ? 0 : 1);
+}
+
+// Calcul du cout global de la partition, definie par le tableau de ses parties
+void UPMODLDiscretizationCosts::ComputePartitionGlobalCostW(const KWFrequencyTable* partTable,
+							    IntVector* ivtreatementgroups)
+{
+	require(partTable->GetFrequencyVectorAt(0)->GetClassLabel() == GetFrequencyVectorCreator()->GetClassLabel());
+
+	double dCost;
+	int i;
+	int nPartileNumber;
+
+	require(partTable != NULL);
+	//require(nGranularity == partTable->GetGranularity());
+	require(ivtreatementgroups != NULL);
+
+	// Parametrage de la structure de cout
+	nGranularity = partTable->GetGranularity();
+	nTotalInstanceNumber = partTable->GetTotalFrequency();
+	nPartileNumber = (int)pow(2, partTable->GetGranularity());
+	if (nPartileNumber > nTotalInstanceNumber or nGranularity == 0)
+		nPartileNumber = nTotalInstanceNumber;
+	nValueNumber = nPartileNumber;
+
+	nClassValueNumber = 0;
+	if (partTable->GetFrequencyVectorNumber() > 0)
+		nClassValueNumber =
+		    cast(KWDenseFrequencyVector*, partTable->GetFrequencyVectorAt(0))->GetFrequencyVector()->GetSize();
+
+	// calcul de W
+	ivtreatementgroups->SetSize(partTable->GetFrequencyVectorNumber());
+
+	// Cout de partition plus somme des couts des parties
+	dCost = ComputePartitionCost(partTable->GetFrequencyVectorNumber());
+
+	for (i = 0; i < partTable->GetFrequencyVectorNumber(); i++)
+		ivtreatementgroups->SetAt(i, ComputePartCostW(partTable->GetFrequencyVectorAt(i)));
+}
+
 double UPMODLDiscretizationCosts::ComputePartitionGlobalCost(const KWFrequencyTable* partTable) const
 {
 	require(partTable->GetFrequencyVectorAt(0)->GetClassLabel() == GetFrequencyVectorCreator()->GetClassLabel());
@@ -508,6 +600,81 @@ double UPMODLGroupingCosts::ComputePartitionGlobalCost(const KWFrequencyTable* p
 		dCost += ComputePartCost(partTable->GetFrequencyVectorAt(i));
 
 	return dCost;
+}
+
+int UPMODLGroupingCosts::ComputePartCostW(const KWFrequencyVector* part) const
+{
+	require(part->GetClassLabel() == GetFrequencyVectorCreator()->GetClassLabel());
+
+	IntVector* ivFrequencyVector;
+	double dCost0, dCost1;
+	int nFrequency;
+	int nIntervalFrequency;
+	int nTreatementModalityNumber;
+	int nTargetModalityNumber;
+	int i, j;
+
+	require(part != NULL);
+	require(nClassValueNumber > 1);
+
+	// Acces aux compteurs du vecteur d'effectif dense
+	ivFrequencyVector = cast(UPDenseFrequencyVector*, part)->GetFrequencyVector();
+	nTreatementModalityNumber = cast(UPDenseFrequencyVector*, part)->GetTreatementModalityNumber();
+	nTargetModalityNumber = cast(UPDenseFrequencyVector*, part)->GetTargetModalityNumber();
+	require(nTreatementModalityNumber > 1);
+	require(ivFrequencyVector->GetSize() == nTreatementModalityNumber * nTargetModalityNumber);
+
+	// Cout de codage des instances de la ligne et de la loi multinomiale de la ligne W=1
+	dCost1 = 0;
+	nIntervalFrequency = 0;
+	for (i = 0; i < ivFrequencyVector->GetSize(); i++)
+	{
+		nFrequency = ivFrequencyVector->GetAt(i);
+		dCost1 -= KWStat::LnFactorial(nFrequency);
+		nIntervalFrequency += nFrequency;
+	}
+	dCost1 += KWStat::LnFactorial(nIntervalFrequency + nTargetModalityNumber - 1);
+	dCost1 -= KWStat::LnFactorial(nTargetModalityNumber - 1);
+
+	// Cout de codage des instances de la ligne et de la loi multinomiale de la ligne W=0
+
+	dCost0 = 0;
+
+	for (i = 0; i < nTreatementModalityNumber; i++)
+	{
+		nIntervalFrequency = 0;
+		for (j = 0; j < nTargetModalityNumber; j++)
+		{
+			nFrequency = ivFrequencyVector->GetAt(j + i * nTargetModalityNumber);
+			dCost0 -= KWStat::LnFactorial(nFrequency);
+			nIntervalFrequency += nFrequency;
+		}
+		dCost0 += KWStat::LnFactorial(nIntervalFrequency + nTargetModalityNumber - 1);
+		dCost0 -= KWStat::LnFactorial(nTargetModalityNumber - 1);
+	}
+
+	return ((dCost0) < (dCost1) ? 0 : 1);
+}
+
+void UPMODLGroupingCosts::ComputePartitionGlobalCostW(const KWFrequencyTable* partTable,
+						      IntVector* ivtreatementgroups) const
+{
+	require(partTable->GetFrequencyVectorAt(0)->GetClassLabel() == GetFrequencyVectorCreator()->GetClassLabel());
+
+	double dCost;
+	int i;
+
+	require(partTable != NULL);
+	require(nGranularity == partTable->GetGranularity());
+	require(ivtreatementgroups != NULL);
+	// calcul de W
+	ivtreatementgroups->SetSize(partTable->GetFrequencyVectorNumber());
+
+	// Cout de partition plus somme des couts des parties
+	dCost = ComputePartitionCost(partTable->GetFrequencyVectorNumber(), partTable->GetGarbageModalityNumber());
+
+	for (i = 0; i < partTable->GetFrequencyVectorNumber(); i++)
+		ivtreatementgroups->SetAt(i, ComputePartCostW(partTable->GetFrequencyVectorAt(i)));
 }
 
 void UPMODLGroupingCosts::WritePartitionCost(int nPartNumber, int nGarbageModalityNumber, ostream& ost) const
