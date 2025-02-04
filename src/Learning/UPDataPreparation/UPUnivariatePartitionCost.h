@@ -44,6 +44,13 @@ public:
 	double ComputePartitionDeltaCost(int nPartNumber, int nGarbageModalityNumber) const override;
 	double ComputePartCost(const KWFrequencyVector* part) const override;
 
+	//calcul de W
+	int ComputePartCostW(const KWFrequencyVector* part) const;
+	// Calcul du cout global de la partition, definie par le tableau de ses parties
+	// W=0 chaque traitement est prix separement
+	// W=1 les traitements sont fusionner en 1 seul
+	void ComputePartitionGlobalCostW(const KWFrequencyTable* partTable, IntVector* ivtreatementgroups);
+
 	// Calcul du cout global de la partition, definie par le tableau de ses parties
 	double ComputePartitionGlobalCost(const KWFrequencyTable* partTable) const override;
 
@@ -57,6 +64,8 @@ public:
 
 	// Libelle de la classe
 	const ALString GetClassLabel() const override;
+
+	IntVector ivTreatementGroups;
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -90,6 +99,11 @@ public:
 	// Calcul du cout global de la partition, definie par le tableau de ses parties
 	double ComputePartitionGlobalCost(const KWFrequencyTable* partTable) const override;
 
+	//calcul de W
+	int ComputePartCostW(const KWFrequencyVector* part) const;
+	// Calcul du cout global de la partition, definie par le tableau de ses parties
+	void ComputePartitionGlobalCostW(const KWFrequencyTable* partTable, IntVector* ivtreatementgroups) const;
+
 	// Affichage du cout de la partition
 	void WritePartitionCost(int nPartNumber, int nGarbageModalityNumber, ostream& ost) const override;
 
@@ -100,6 +114,8 @@ public:
 
 	// Libelle de la classe
 	const ALString GetClassLabel() const override;
+
+	IntVector ivtreatementgroups;
 };
 
 ////////////////////////////////////////////////////////////////////////////

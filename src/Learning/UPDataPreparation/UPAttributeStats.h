@@ -76,6 +76,9 @@ public:
 	void SetTreatementModalityNumber(int nModality);
 
 protected:
+	//vecteur de W pour chaque intervalle ou Groupe
+	IntVector ivtreatementgroups;
+
 	// Nettoyage des resultats de preparation de donnees
 	void CleanDataPreparationResults() override;
 

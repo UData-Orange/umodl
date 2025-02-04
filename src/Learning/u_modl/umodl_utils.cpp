@@ -411,10 +411,6 @@ void AnalyseAllUsedVariables(ObjectArray& attribStats, const KWTupleTableLoader&
 		InitAndComputeAttributeStats(*currStats, currAttrib->GetName(), currAttrib->GetType(), learningSpec,
 					     multivariateVarUplift);
 		attribStats.Add(currStats);
-
-		//DDD
-		cout << "Attribute stats learning spec: " << currStats->GetLearningSpec() << " "
-		     << learningSpec.GetNullCost() << endl;
 	}
 
 	ensure(attribStats.GetSize() > 0);

@@ -610,6 +610,16 @@ void UPAttributeStats::WriteJSONArrayFields(JSONFile* fJSON, boolean bSummary)
 		// Valeurs dans le cas categoriel
 		if (symbolValueStats != NULL and symbolValueStats->GetAttributeAt(0)->GetPartNumber() > 1)
 			symbolValueStats->WriteJSONKeyValueFrequencies(fJSON, "inputValues");
+
+		//Valeur de W
+		if (ivtreatementgroups.GetSize() > 0)
+		{
+			// Ecriture des choix de W par partie
+			fJSON->BeginKeyList("Treatement Groups");
+			for (int nValue = 0; nValue < ivtreatementgroups.GetSize(); nValue++)
+				fJSON->WriteInt(ivtreatementgroups.GetAt(nValue));
+			fJSON->EndList();
+		}
 	}
 }
 
@@ -945,7 +955,21 @@ void UPAttributeStats::Discretize(const KWTupleTable* tupleTable)
 				    ->GetDiscretizerSpec()
 				    ->GetDiscretizer(GetTargetAttributeType())
 				    ->Discretize(kwftInitialTable, kwftPreparedTable);
-
+				//NV
+				// calcul de W
+				ensure(kwftPreparedTable != NULL);
+				if (GetPreprocessingSpec()
+					->GetDiscretizerSpec()
+					->GetDiscretizer(GetTargetAttributeType())
+					->GetName() == "UMODL")
+				{
+					cast(UPMODLDiscretizationCosts*,
+					     cast(UPDiscretizerUMODL*,
+						  GetPreprocessingSpec()->GetDiscretizerSpec()->GetDiscretizer(
+						      GetTargetAttributeType()))
+						 ->GetDiscretizationCosts())
+					    ->ComputePartitionGlobalCostW(kwftPreparedTable, &ivtreatementgroups);
+				}
 				// Memorisation des couts MODL
 				if (discretizerMODLFamily != NULL)
 				{
