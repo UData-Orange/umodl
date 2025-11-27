@@ -6,15 +6,6 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Do nothing on Ubuntu Latest
+name: Upload Python Package
 
 on: workflow_dispatch
-
-jobs:
-  release-build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Build release distributions
-        run: |
-          echo "Not doing much"
