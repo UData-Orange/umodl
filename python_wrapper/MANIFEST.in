@@ -1,8 +1,0 @@
-prune *
-graft symlinktoparent/packaging
-graft symlinktoparent/scripts
-graft symlinktoparent/src
-include symlinktoparent/CMakeLists.txt symlinktoparent/CMakePresets.json
-include symlinktoparent/LICENSE symlinktoparent/README.md
-include pyproject.toml setup.py
-include src/umodlwrapper/__init__.py src/umodlwrapper/runumodl.py

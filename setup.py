@@ -26,14 +26,13 @@ class BuildC(setuptools.Command):
         pkgdirpath = next(Path(".").glob("build/lib.*"))  # Detect name of pkg directory since it is platform-dependant
         subprocess.run([which("cmake"),
                         "-B", "build/cmake",
-                        "-S", "symlinktoparent",
                         "--preset", preset,
                         "-DMPI=OFF",
                         "-DTESTING=OFF"],
                         check=True)  # Generate build config files
         subprocess.run([which("cmake"), "--build", "build/cmake", "--target", "umodl"], check=True)  # Build
         for filename in ["README.md", "LICENSE"]:
-            self.copy_file(Path("symlinktoparent") / filename, pkgdirpath / filename)
+            self.copy_file(filename, pkgdirpath / filename)
         if system == "Windows":
             self.copy_file("build/cmake/bin/umodl.exe", pkgdirpath / "umodlwrapper/umodl.exe")
         else:

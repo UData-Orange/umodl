@@ -1,0 +1,7 @@
+prune *
+graft packaging
+graft scripts
+graft src
+include CMakeLists.txt CMakePresets.json
+include LICENSE README.md
+include pyproject.toml setup.py
