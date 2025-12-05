@@ -2,7 +2,7 @@ import setuptools
 import setuptools.command.build
 import subprocess
 from pathlib import Path
-from shutil import which
+from shutil import which, rmtree
 import platform
 
 
@@ -24,6 +24,8 @@ class BuildC(setuptools.Command):
         else:
             raise ValueError("Unsupported OS")
         pkgdirpath = next(Path(".").glob("build/lib.*"))  # Detect name of pkg directory since it is platform-dependant
+        rmtree(pkgdirpath)
+        pkgdirpath.mkdir()
         subprocess.run([which("cmake"),
                         "-B", "build/cmake",
                         "--preset", preset,
@@ -33,6 +35,8 @@ class BuildC(setuptools.Command):
         subprocess.run([which("cmake"), "--build", "build/cmake", "--target", "umodl"], check=True)  # Build
         for filename in ["README.md", "LICENSE"]:
             self.copy_file(filename, pkgdirpath / filename)
+        (pkgdirpath / "umodlwrapper").mkdir()
+        self.copy_tree("src/umodlwrapper", pkgdirpath / "umodlwrapper")
         if system == "Windows":
             self.copy_file("build/cmake/bin/umodl.exe", pkgdirpath / "umodlwrapper/umodl.exe")
         else:
