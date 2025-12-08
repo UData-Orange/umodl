@@ -39,6 +39,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - uses: ilammy/msvc-dev-cmd@v1  # Ensure compiler and linker are on PATH (needed for building wheels on windows)
+
       - uses: pypa/cibuildwheel@v3.3.0
       
       - uses: actions/upload-artifact@v4
