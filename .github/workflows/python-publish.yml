@@ -1,16 +1,6 @@
-# This workflow will upload a Python Package to PyPI when a release is created
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 name: Upload Python Package
 
 on: workflow_dispatch
-  # release:
-  #   types: [published]
 
 permissions:
   contents: read
@@ -48,7 +38,7 @@ jobs:
           CIBW_ARCHS: auto64
           CIBW_BEFORE_ALL_LINUX: dnf -y install ninja-build  # GNU/Linux builds are performed in AlmaLinux containers
 
-      - name: Tag built wheel with ABI3 compatibility
+      - name: Tag built wheel for ABI3 compatibility
         run: pipx run wheel tags --remove --abi-tag=abi3 $(ls wheelhouse/*.whl)
       
       - uses: actions/upload-artifact@v4
