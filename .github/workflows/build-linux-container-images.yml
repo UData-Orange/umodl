@@ -1,0 +1,13 @@
+# This echo-only workflow is only there to allow running the workflow of the same name on other branches.
+
+name: Generate GNU/Linux container images
+
+on: workflow_dispatch
+
+jobs:
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simply echo
+        run: |
+          echo "Not doing much"
