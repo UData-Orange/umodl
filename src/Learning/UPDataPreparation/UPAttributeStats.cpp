@@ -3,7 +3,7 @@
 // at https://spdx.org/licenses/BSD-3-Clause-Clear.html or see the "LICENSE" file for more details.
 
 #include "UPAttributeStats.h"
-#include "UpLearningSpec.h"
+#include "UPLearningSpec.h"
 #include "UPFrequencyVector.h"
 #include "UPGrouperUMODL.h"
 
