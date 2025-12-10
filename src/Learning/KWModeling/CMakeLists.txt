@@ -10,7 +10,7 @@ endif()
 set_khiops_options(KWModeling)
 
 target_include_directories(KWModeling PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(KWModeling PUBLIC KDDomainKnowledge KWDataPreparation)
+target_link_libraries(KWModeling PUBLIC KDDomainKnowledge)
 
 # Generate cpp files from dd file
 # cmake-format: off
