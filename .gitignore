@@ -40,3 +40,5 @@ __pycache__/
 dist/
 *.egg-info/
 wheelhouse/
+.venv/
+venv/
