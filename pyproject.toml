@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "umodl-wrapper"
-version = "0.0.9"
+version = "0.0.11"
 description = "A 'subprocess.run' wrapper around the umodl program"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "BSD-3-Clause-Clear"
 license-files = ["LICENSE"]
-authors = [{name="Orange-Innovation"}]
+maintainers = [{name="The Khiops Team", email="khiops.team@orange.com"}]
 
 [project.urls]
 source = "https://github.com/UData-Orange/umodl.git"
