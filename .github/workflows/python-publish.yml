@@ -54,7 +54,6 @@ jobs:
       url: https://test.pypi.org/p/umodl-wrapper
     permissions:
       id-token: write
-
     steps:
       - uses: actions/download-artifact@v5
         with:
@@ -65,3 +64,32 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+
+  test-pkg:
+    name: Test package on ${{ matrix.os }}
+    needs: [pypi-publish]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.9
+      
+      - name: Install package
+        run: python -m pip install -i https://test.pypi.org/simple/ umodl-wrapper
+
+      # Call the function 'run_umodl' with invalid parameters.
+      # It should throw a subprocess.CalledProcessError if the error is raised by the umodl subprocess.
+      # It means that the subprocess has been successfully run.
+      # Otherwise it would throw for example a FileNotFoundError if the umodl executable is not found.
+      - name: Run function from package
+        shell: python
+        run: |
+          from umodlwrapper import run_umodl
+          import subprocess
+          try:
+              run_umodl("", "", "", "", "")
+          except subprocess.CalledProcessError:
+              pass
