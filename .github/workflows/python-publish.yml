@@ -79,7 +79,7 @@ jobs:
           python-version: 3.9
       
       - name: Install package
-        run: python -m pip install -i https://test.pypi.org/simple/ umodl-wrapper
+        run: python -m pip install -i https://test.pypi.org/simple/ umodl
 
       # Call the function 'run_umodl' with invalid parameters.
       # It should throw a subprocess.CalledProcessError if the error is raised by the umodl subprocess.
