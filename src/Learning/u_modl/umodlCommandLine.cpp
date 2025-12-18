@@ -34,7 +34,7 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 	}
 
 	// Test du bon nombre d'options
-	if (6 <= argc && argc <= 7)
+	if (argc < 6 || argc > 7)
 	{
 		const ALString& classLabel = GetClassLabel();
 		ALString errMsg =
