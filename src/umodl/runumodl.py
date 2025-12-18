@@ -34,4 +34,4 @@ def run_umodl(txtfile, kdicfile, kdictname, treatmentcolname, targetcolname, max
     subprocess.CalledProcessError:
         If an error happened during the execution of the umodl executable.
     """
-    return subprocess.run(filter(None, [umodl, txtfile, kdicfile, kdictname, treatmentcolname, targetcolname, str(maxpartnumber)]), check=True)
+    return subprocess.run(filter(None, [umodl, txtfile, kdicfile, kdictname, treatmentcolname, targetcolname, None if maxpartnumber is None else str(int(maxpartnumber))]), check=True)
