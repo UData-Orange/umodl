@@ -46,12 +46,13 @@ jobs:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: wheelhouse/*.whl
 
-  pypi-publish:
+  testpypi-publish:
+    name: Publish to Test.PyPI.org
     needs: [build-sdist, build-wheels]
     runs-on: ubuntu-latest
     environment:
-      name: pypi
-      url: https://pypi.org/p/umodl
+      name: testpypi
+      url: https://test.pypi.org/p/umodl-wrapper
     permissions:
       id-token: write
     steps:
@@ -62,10 +63,12 @@ jobs:
           merge-multiple: true
 
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
 
-  test-pkg:
-    name: Test package on ${{ matrix.os }}
-    needs: [pypi-publish]
+  test-pkg-from-testpypi:
+    name: Test package from Test.PyPI.org on ${{ matrix.os }}
+    needs: [testpypi-publish]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -91,3 +94,21 @@ jobs:
               run_umodl("", "", "", "", "")
           except subprocess.CalledProcessError:
               pass
+  
+  pypi-publish:
+    name: Publish to PyPI.org
+    needs: [test-pkg-from-testpypi]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/umodl
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
