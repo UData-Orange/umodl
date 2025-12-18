@@ -35,12 +35,12 @@ class BuildC(setuptools.Command):
         subprocess.run([which("cmake"), "--build", "build/cmake", "--target", "umodl"], check=True)  # Build
         for filename in ["README.md", "LICENSE"]:
             self.copy_file(filename, pkgdirpath / filename)
-        (pkgdirpath / "umodlwrapper").mkdir()
-        self.copy_tree("src/umodlwrapper", pkgdirpath / "umodlwrapper")
+        (pkgdirpath / "umodl").mkdir()
+        self.copy_tree("src/umodl", pkgdirpath / "umodl")
         if system == "Windows":
-            self.copy_file("build/cmake/bin/umodl.exe", pkgdirpath / "umodlwrapper/umodl.exe")
+            self.copy_file("build/cmake/bin/umodl.exe", pkgdirpath / "umodl/umodl.exe")
         else:
-            self.copy_file("build/cmake/bin/umodl", pkgdirpath / "umodlwrapper/umodl")
+            self.copy_file("build/cmake/bin/umodl", pkgdirpath / "umodl/umodl")
 
 
 class Build(setuptools.command.build.build):
