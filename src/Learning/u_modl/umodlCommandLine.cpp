@@ -3,6 +3,7 @@
 // at https://spdx.org/licenses/BSD-3-Clause-Clear.html or see the "LICENSE" file for more details.
 
 #include "umodlCommandLine.h"
+#include <cstdlib>
 
 const ALString UMODLCommandLine::GetClassLabel() const
 {
@@ -33,7 +34,7 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 	}
 
 	// Test du bon nombre d'options
-	if (argc != 6)
+	if (6 <= argc && argc <= 7)
 	{
 		const ALString& classLabel = GetClassLabel();
 		ALString errMsg =
@@ -48,6 +49,21 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 	res.className = argv[3];
 	res.attribTreatName = argv[4];
 	res.attribTargetName = argv[5];
+	res.maxPartNumber = 2LL;  // Valeur par defaut si argument non specifie
+	if (argc >= 7)  // Traitement du parametre MAXPARTNUMBER
+	{
+		res.maxPartNumber = atoll((const char *)argv[6]);
+		if (res.maxPartNumber == 0LL)
+		{
+			std::cout << "MAXPARTNUMBER is not a valid number.\n";
+			return false;
+		}
+		if (res.maxPartNumber < 2)
+		{
+			std::cout << "MAXPARTNUMBER must be greater than or equal to 2.\n";
+			return false;
+		}
+	}
 
 	if (res.dataFileName == res.domainFileName)
 	{
@@ -107,7 +123,7 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 
 void UMODLCommandLine::ShowHelp()
 {
-	cout << "Usage: " << GetClassLabel() << " [DATAFILENAME] [DICTIONARY.kdic] [CLASS] [TREATMENT] [TARGET]\n"
+	cout << "Usage: " << GetClassLabel() << " [DATAFILENAME] [DICTIONARY.kdic] [CLASS] [TREATMENT] [TARGET] [[MAXPARTNUMBER]]\n"
 	     << "Compute uplift statistics from the data in DATAFILENAME.\n"
 	     << "DICTIONARY.kdic describes the names and types of the variables of the associated data in "
 		"DATAFILENAME.\n"
@@ -115,6 +131,7 @@ void UMODLCommandLine::ShowHelp()
 	     << "TREATMENT and TARGET declare which variables in DICTIONARY.kdic are used as the uplift treatment "
 		"variable\n"
 	     << "and the target variable for the uplift analysis.\n"
+	     << "MAXPARTNUMBER is optional and sets the maximum number of intervals or groups. Defaults to 2.\n"
 	     << "A recoded dictionary is output in UP_DICTIONARY.kdic.\n"
 	     << "A report of the statistics of the variables is output as a JSON file in UP_DICTIONARY.json.\n";
 

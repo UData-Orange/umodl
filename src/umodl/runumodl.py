@@ -6,7 +6,7 @@ import platform
 
 umodl = importlib.resources.files("umodl") / ("umodl.exe" if platform.system() == "Windows" else "umodl")
 
-def run_umodl(txtfile, kdicfile, kdictname, treatmentcolname, targetcolname):
+def run_umodl(txtfile, kdicfile, kdictname, treatmentcolname, targetcolname, maxpartnumber = None):
     """Run the umodl executable.
 
     Parameters
@@ -21,6 +21,8 @@ def run_umodl(txtfile, kdicfile, kdictname, treatmentcolname, targetcolname):
         The name of the treatment column as found in txtfile and kdicfile.
     targetcolname: str
         The name of the target column as found in txtfile and kdicfile.
+    maxpartnumber: int | None (default: None)
+        The maximum number of intervals or groups. None means default to the 'umodl' program default.
 
     Returns
     -------
@@ -32,4 +34,4 @@ def run_umodl(txtfile, kdicfile, kdictname, treatmentcolname, targetcolname):
     subprocess.CalledProcessError:
         If an error happened during the execution of the umodl executable.
     """
-    return subprocess.run([umodl, txtfile, kdicfile, kdictname, treatmentcolname, targetcolname], check=True)
+    return subprocess.run(filter(None, [umodl, txtfile, kdicfile, kdictname, treatmentcolname, targetcolname, maxpartnumber]), check=True)

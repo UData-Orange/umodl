@@ -38,6 +38,7 @@ int main(int argc, char** argv)
 	const ALString& attribTargetName = args.attribTargetName;
 	const ALString& outputFileName = args.outputFileName;
 	const ALString& reportJSONFileName = args.reportJSONFileName;
+	const longint nMaxPartNumber = args.maxPartNumber;
 
 	//lecture du fichier kdic et des kwclass
 	KWClassDomain* const currentDomainPtr = KWClassDomain::GetCurrentDomain();
@@ -113,6 +114,8 @@ int main(int argc, char** argv)
 	learningSpec.SetDatabase(&readDatabase);
 	learningSpec.SetTargetAttributeName(attribTargetName);
 	learningSpec.SetTreatementAttributeName(attribTreatName);
+	learningSpec.GetPreprocessingSpec()->GetDiscretizerSpec()->SetMaxIntervalNumber(nMaxPartNumber);
+	learningSpec.GetPreprocessingSpec()->GetGrouperSpec()->SetMaxGroupNumber(nMaxPartNumber);
 
 	///////////////////////////////////////////////////////////////////////
 	// mode supervise

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "ALString.h"
+#include "Longint.h"
 #include "Object.h"
 #include "Version.h"
 
@@ -25,6 +26,7 @@ public:
 		ALString attribTargetName;   // nom de l'attribut cible du probleme d'uplift
 		ALString outputFileName;     // nom du fichier pour l'ecriture du dictionnaire recode
 		ALString reportJSONFileName; // nom du fichier .json pour l'ecriture des statistiques calculees
+		longint maxPartNumber;       // nombre max d'intervalles ou de groupes (optionnel, 2 par défaut)
 	};
 
 	// Initialisation des parametres
