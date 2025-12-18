@@ -4,7 +4,7 @@ import subprocess
 import importlib.resources
 import platform
 
-umodl = importlib.resources.files("umodlwrapper") / ("umodl.exe" if platform.system() == "Windows" else "umodl")
+umodl = importlib.resources.files("umodl") / ("umodl.exe" if platform.system() == "Windows" else "umodl")
 
 def run_umodl(txtfile, kdicfile, kdictname, treatmentcolname, targetcolname):
     """Run the umodl executable.
