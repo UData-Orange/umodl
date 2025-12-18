@@ -49,11 +49,11 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 	res.className = argv[3];
 	res.attribTreatName = argv[4];
 	res.attribTargetName = argv[5];
-	res.maxPartNumber = 2LL;  // Valeur par defaut si argument non specifie
+	res.maxPartNumber = 2;  // Valeur par defaut si argument non specifie
 	if (argc >= 7)  // Traitement du parametre MAXPARTNUMBER
 	{
-		res.maxPartNumber = atoll((const char *)argv[6]);
-		if (res.maxPartNumber == 0LL)
+		res.maxPartNumber = atoi((const char *)argv[6]);
+		if (res.maxPartNumber == 0)
 		{
 			std::cout << "MAXPARTNUMBER is not a valid number.\n";
 			return false;

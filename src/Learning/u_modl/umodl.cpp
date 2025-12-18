@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 	const ALString& attribTargetName = args.attribTargetName;
 	const ALString& outputFileName = args.outputFileName;
 	const ALString& reportJSONFileName = args.reportJSONFileName;
-	const longint nMaxPartNumber = args.maxPartNumber;
+	const int nMaxPartNumber = args.maxPartNumber;
 
 	//lecture du fichier kdic et des kwclass
 	KWClassDomain* const currentDomainPtr = KWClassDomain::GetCurrentDomain();
