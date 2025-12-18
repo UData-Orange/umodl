@@ -88,7 +88,7 @@ jobs:
       - name: Run function from package
         shell: python
         run: |
-          from umodlwrapper import run_umodl
+          from umodl import run_umodl
           import subprocess
           try:
               run_umodl("", "", "", "", "")
