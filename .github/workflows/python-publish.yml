@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/umodl-wrapper
+      url: https://test.pypi.org/p/umodl
     permissions:
       id-token: write
     steps:
