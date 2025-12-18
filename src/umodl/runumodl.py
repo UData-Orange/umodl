@@ -22,7 +22,7 @@ def run_umodl(txtfile, kdicfile, kdictname, treatmentcolname, targetcolname, max
     targetcolname: str
         The name of the target column as found in txtfile and kdicfile.
     maxpartnumber: int, default=None
-        The maximum number of intervals or groups. None means default to the 'umodl' program default.
+        The maximal number of intervals or groups. None means default to the 'umodl' program default.
 
     Returns
     -------
