@@ -3,7 +3,7 @@
 // at https://spdx.org/licenses/BSD-3-Clause-Clear.html or see the "LICENSE" file for more details.
 
 #include "umodlCommandLine.h"
-#include <cstdlib>
+#include <string>
 
 const ALString UMODLCommandLine::GetClassLabel() const
 {
@@ -49,18 +49,26 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 	res.className = argv[3];
 	res.attribTreatName = argv[4];
 	res.attribTargetName = argv[5];
-	res.maxPartNumber = 2;  // Valeur par defaut si argument non specifie
+	res.maxPartNumber = 0;  // Valeur par defaut si argument non specifie
 	if (argc >= 7)  // Traitement du parametre MAXPARTNUMBER
 	{
-		res.maxPartNumber = atoi((const char *)argv[6]);
-		if (res.maxPartNumber == 0)
+		std::string sMaxPartNumber(argv[6]);
+		try
+		{
+			res.maxPartNumber = std::stoi(sMaxPartNumber);
+			if (res.maxPartNumber < 0)
+			{
+				throw std::out_of_range("number is negative");
+			}
+		}
+		catch (const std::invalid_argument&)
 		{
 			std::cout << "MAXPARTNUMBER is not a valid number.\n";
 			return false;
 		}
-		if (res.maxPartNumber < 2)
+		catch (const std::out_of_range&)
 		{
-			std::cout << "MAXPARTNUMBER must be greater than or equal to 2.\n";
+			std::cout << "MAXPARTNUMBER must be greater than or equal to 0.\n";
 			return false;
 		}
 	}
@@ -131,7 +139,8 @@ void UMODLCommandLine::ShowHelp()
 	     << "TREATMENT and TARGET declare which variables in DICTIONARY.kdic are used as the uplift treatment "
 		"variable\n"
 	     << "and the target variable for the uplift analysis.\n"
-	     << "MAXPARTNUMBER is optional and sets the maximum number of intervals or groups. Defaults to 2.\n"
+	     << "MAXPARTNUMBER is optional and sets the maximum number of intervals or groups. Defaults to 0, which is automatic "
+		 "mode.\n"
 	     << "A recoded dictionary is output in UP_DICTIONARY.kdic.\n"
 	     << "A report of the statistics of the variables is output as a JSON file in UP_DICTIONARY.json.\n";
 
