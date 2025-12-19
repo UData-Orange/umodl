@@ -3,7 +3,9 @@
 // at https://spdx.org/licenses/BSD-3-Clause-Clear.html or see the "LICENSE" file for more details.
 
 #include "umodlCommandLine.h"
-#include <string>
+#include <cstdlib>
+#include <cerrno>
+#include <climits>
 
 const ALString UMODLCommandLine::GetClassLabel() const
 {
@@ -52,25 +54,19 @@ boolean UMODLCommandLine::InitializeParameters(int argc, char** argv, Arguments&
 	res.maxPartNumber = 0;  // Valeur par defaut si argument non specifie
 	if (argc >= 7)  // Traitement du parametre MAXPARTNUMBER
 	{
-		std::string sMaxPartNumber(argv[6]);
-		try
-		{
-			res.maxPartNumber = std::stoi(sMaxPartNumber);
-			if (res.maxPartNumber < 0)
-			{
-				throw std::out_of_range("number is negative");
-			}
-		}
-		catch (const std::invalid_argument&)
-		{
-			std::cout << "MAXPARTNUMBER is not a valid number.\n";
-			return false;
-		}
-		catch (const std::out_of_range&)
+		char *end;
+		long nMaxPartNumber = std::strtol(argv[6], &end, 10);
+		if (errno == ERANGE || nMaxPartNumber < 0L || nMaxPartNumber > (long)INT_MAX)
 		{
 			std::cout << "MAXPARTNUMBER must be greater than or equal to 0.\n";
 			return false;
 		}
+		if (end == argv[6])
+		{
+			std::cout << "MAXPARTNUMBER is not a valid number.\n";
+			return false;
+		}
+		res.maxPartNumber = (int)nMaxPartNumber;
 	}
 
 	if (res.dataFileName == res.domainFileName)
