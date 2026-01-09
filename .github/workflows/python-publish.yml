@@ -1,3 +1,10 @@
+# This workflow will:
+# - Build the source distribution (Python sdist)
+# - Build the binary distributions (Python wheels)
+# - Publish the sdist+wheels to test.pypi.org
+# - Install package from test.pypi.org and run it for testing purposes
+# - Publish the package to pypi.org
+
 name: Upload Python Package
 
 on: workflow_dispatch
@@ -29,15 +36,19 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: ilammy/msvc-dev-cmd@v1  # Ensure compiler and linker are on PATH (needed for building wheels on windows)
+      # Ensure compiler and linker are on PATH (needed for building wheels on windows, does nothing on other OSes)
+      - uses: ilammy/msvc-dev-cmd@v1
 
       - uses: pypa/cibuildwheel@v3.3.0
         env:
-          CIBW_BUILD: cp39-*
-          CIBW_SKIP: "*musllinux*"  # umodl/khiops source code does not support musllinux builds
-          CIBW_ARCHS: auto64
-          CIBW_BEFORE_ALL_LINUX: dnf -y install ninja-build  # GNU/Linux builds are performed in AlmaLinux containers
+          CIBW_BUILD: cp39-*  # Create wheels compatible with CPython (standard implementation of Python) 3.9 and newer
+          CIBW_SKIP: "*musllinux*"  # umodl/khiops source code does not support musllinux builds, so do not try to create the wheels for these platforms
+          CIBW_ARCHS: auto64  # Only build 64-bit wheels. Needed for windows which otherwise might tag the 64-bit wheel as a 32-bit one, and thus create two wheels with the same name.
+          CIBW_BEFORE_ALL_LINUX: dnf -y install ninja-build  # GNU/Linux builds are performed in AlmaLinux containers and umodl/khiops CMake configuration uses ninja
 
+      # Because our Python package does not contain extension modules, it does not rely on the Python C library.
+      # Thus, we tag the wheels with ABI3 compatibility which will allow the package to be used with all Python
+      # versions from the one specified by the Python tag of the wheels (3.9, see previous step) to the newest.
       - name: Tag built wheel for ABI3 compatibility
         run: pipx run wheel tags --remove --abi-tag=abi3 $(ls wheelhouse/*.whl)
       
