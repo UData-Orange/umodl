@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "umodl"
@@ -14,3 +14,23 @@ maintainers = [{name="The Khiops Team", email="khiops.team@orange.com"}]
 
 [project.urls]
 source = "https://github.com/UData-Orange/umodl.git"
+
+[tool.scikit-build]
+wheel.py-api = "py3"
+wheel.packages = ["packaging/python/umodl"]
+ninja.make-fallback = false
+cmake.define = {PACKAGING_FOR_PYTHON=true, MPI=false, TESTING=false}
+build.targets = ["umodl"]
+install.components = ["umodl"]
+
+[[tool.scikit-build.overrides]]
+if.platform-system = "^linux"
+cmake.args = ["--preset", "linux-gcc-release"]
+
+[[tool.scikit-build.overrides]]
+if.platform-system = "^darwin"
+cmake.args = ["--preset", "macos-clang-release"]
+
+[[tool.scikit-build.overrides]]
+if.platform-system = "^win32"
+cmake.args = ["--preset", "windows-msvc-release"]

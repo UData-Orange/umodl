@@ -48,6 +48,7 @@ option(BUILD_LEX_YACC "Re-generate parsing files with lex & yacc" OFF)
 option(BUILD_JARS "Re-generate norm.jar and khiops.jar" OFF)
 option(GENERATE_VIEWS "Generate views sources from dd files" OFF)
 option(C11 "Build whith C++11 libraries (ON,OFF)" ON)
+option(PACKAGING_FOR_PYTHON "Set to ON when installing into Python package" OFF)
 
 # Print the options
 message("\nKhiops build options:\n")
@@ -58,6 +59,7 @@ message("  C11=\"${C11}\"")
 message("  BUILD_LEX_YACC=\"${BUILD_LEX_YACC}\"")
 message("  BUILD_JARS=\"${BUILD_JARS}\"")
 message("  GENERATE_VIEWS=\"${GENERATE_VIEWS}\"")
+message("  PACKAGING_FOR_PYTHON=\"${PACKAGING_FOR_PYTHON}\"")
 message("\n")
 
 # Check if the os is a linux fedora-like distro (CentOS, Rocky etc...)

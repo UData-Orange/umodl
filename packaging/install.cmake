@@ -184,3 +184,15 @@ else(UNIX)
                  NEWLINE_STYLE CRLF)
 
 endif(UNIX)
+
+# ######################################## UModl installation
+
+if(PACKAGING_FOR_PYTHON)
+  install(TARGETS umodl RUNTIME DESTINATION "./umodl" COMPONENT umodl)
+else()
+  if(CMAKE_HOST_SYSTEM_NAME STREQUAL Windows)
+    install(TARGETS umodl RUNTIME DESTINATION "./" COMPONENT umodl)
+  else()
+    install(TARGETS umodl RUNTIME DESTINATION usr/bin COMPONENT umodl)
+  endif()
+endif()
