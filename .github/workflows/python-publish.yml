@@ -43,6 +43,10 @@ jobs:
         env:
           CIBW_BUILD: cp39-*  # Create wheels compatible with CPython (standard implementation of Python) 3.9 and newer
           CIBW_SKIP: "*musllinux*"  # umodl/khiops source code does not support musllinux builds, so do not try to create the wheels for these platforms
+          # Allow Ninja to be used even on Windows. Without this, Ninja fails, complaining that a platform has been specified.
+          # Ninja does not support platform specification, which is mostly reserved to Visual Studio generators.
+          # Somehow, this variable seems to be set so we have to empty it.
+          CMAKE_GENERATOR_PLATFORM: null
       
       - uses: actions/upload-artifact@v4
         with:
