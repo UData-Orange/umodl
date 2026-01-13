@@ -20,7 +20,7 @@ wheel.py-api = "py3"
 wheel.packages = ["packaging/python/umodl"]
 ninja.make-fallback = false
 cmake.define = {PACKAGING_FOR_PYTHON=true, MPI=false, TESTING=false}
-cmake.args = ["-A", ""]
+
 build.targets = ["umodl"]
 install.components = ["umodl"]
 
@@ -40,5 +40,5 @@ inherit.cmake.args = "append"
 cmake.args = ["--preset", "windows-msvc-release"]
 
 [tool.cibuildwheel]
-build = "cp39-*"
-skip = "*musllinux*"
+build = "cp39-*"  # Create wheels compatible with CPython 3.9 and newer (and scikit-build-core will re-tag the Python API as "py3")
+skip = "*musllinux*"  # umodl does not support musllinux
