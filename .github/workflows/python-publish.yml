@@ -43,8 +43,7 @@ jobs:
         env:
           CIBW_BUILD: cp39-*  # Create wheels compatible with CPython (standard implementation of Python) 3.9 and newer
           CIBW_SKIP: "*musllinux*"  # umodl/khiops source code does not support musllinux builds, so do not try to create the wheels for these platforms
-          CIBW_ARCHS: auto64  # Only build 64-bit wheels. Needed for windows which otherwise might tag the 64-bit wheel as a 32-bit one, and thus create two wheels with the same name.
-          CIBW_BEFORE_ALL_LINUX: dnf -y install ninja-build  # GNU/Linux builds are performed in AlmaLinux containers and umodl/khiops CMake configuration uses ninja
+          # CIBW_BEFORE_ALL_LINUX: dnf -y install ninja-build  # GNU/Linux builds are performed in AlmaLinux containers and umodl/khiops CMake configuration uses ninja
 
       # Because our Python package does not contain extension modules, it does not rely on the Python C library.
       # Thus, we tag the wheels with ABI3 compatibility which will allow the package to be used with all Python
