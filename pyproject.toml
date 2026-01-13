@@ -20,7 +20,10 @@ wheel.py-api = "py3"
 wheel.packages = ["packaging/python/umodl"]
 ninja.make-fallback = false
 cmake.define = {PACKAGING_FOR_PYTHON=true, MPI=false, TESTING=false}
-
+# Allow Ninja to be used even on Windows. Without this, Ninja fails, complaining that a platform has been specified.
+# Ninja does not support platform specification, which is mostly reserved to Visual Studio generators.
+# Somehow, this variable seems to be set so we have to empty it.
+cmake.args = ["-A", ""]
 build.targets = ["umodl"]
 install.components = ["umodl"]
 
