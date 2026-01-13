@@ -18,7 +18,7 @@ source = "https://github.com/UData-Orange/umodl.git"
 [tool.scikit-build]
 wheel.py-api = "py3"
 wheel.packages = ["packaging/python/umodl"]
-ninja.make-fallback = false
+# ninja.make-fallback = false
 cmake.define = {PACKAGING_FOR_PYTHON=true, MPI=false, TESTING=false}
 build.targets = ["umodl"]
 install.components = ["umodl"]
