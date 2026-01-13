@@ -20,17 +20,25 @@ wheel.py-api = "py3"
 wheel.packages = ["packaging/python/umodl"]
 ninja.make-fallback = false
 cmake.define = {PACKAGING_FOR_PYTHON=true, MPI=false, TESTING=false}
+cmake.args = ["-A", ""]
 build.targets = ["umodl"]
 install.components = ["umodl"]
 
 [[tool.scikit-build.overrides]]
 if.platform-system = "^linux"
+inherit.cmake.args = "append"
 cmake.args = ["--preset", "linux-gcc-release"]
 
 [[tool.scikit-build.overrides]]
 if.platform-system = "^darwin"
+inherit.cmake.args = "append"
 cmake.args = ["--preset", "macos-clang-release"]
 
 [[tool.scikit-build.overrides]]
 if.platform-system = "^win32"
+inherit.cmake.args = "append"
 cmake.args = ["--preset", "windows-msvc-release"]
+
+[tool.cibuildwheel]
+build = "cp39-*"
+skip = "*musllinux*"
