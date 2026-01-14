@@ -110,7 +110,7 @@ if(MPI AND IS_FEDORA_LIKE AND NOT IS_CONDA)
         "MPI_SUFFIX is not defined, you have to load the mpi module e.g.:\n source /etc/profile.d/modules.sh && module load mpi/mpich-x86_64"
     )
   endif(DEFINED ENV{MPI_SUFFIX})
-endif(IS_FEDORA_LIKE AND NOT IS_CONDA)
+endif(MPI AND IS_FEDORA_LIKE AND NOT IS_CONDA)
 
 # Set the location of the built artifacts:
 #
