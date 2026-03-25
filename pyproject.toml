@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core"]
+requires = ["scikit-build-core>=0.11.6"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -18,30 +18,48 @@ source = "https://github.com/UData-Orange/umodl.git"
 [tool.scikit-build]
 wheel.py-api = "py3"
 wheel.packages = ["packaging/python/umodl"]
-ninja.make-fallback = false
-cmake.define = {PACKAGING_FOR_PYTHON=true, MPI=false, TESTING=false}
-# Allow Ninja to be used even on Windows. Without this, Ninja fails, complaining that a platform has been specified.
-# Ninja does not support platform specification, which is mostly reserved to Visual Studio generators.
-# Somehow, this variable seems to be set so we have to empty it.
-cmake.args = ["-A", ""]
+cmake.version = "CMakeLists.txt"
 build.targets = ["umodl"]
-install.components = ["umodl"]
+install.components = ["umodl"]  # Only install umodl, not KNI or anything else.
+ninja.make-fallback = false
 
 [[tool.scikit-build.overrides]]
 if.platform-system = "^linux"
-inherit.cmake.args = "append"
-cmake.args = ["--preset", "linux-gcc-release"]
+cmake.args = ["--preset", "linux-gcc-release", "-G", "Ninja"]
+build-dir = "build/linux-gcc-release"
+cmake.define.CMAKE_BINARY_DIR = "build/linux-gcc-release"
+cmake.define.PACKAGING_FOR_PYTHON = true
+cmake.define.MPI = false
+cmake.define.TESTING=false
 
 [[tool.scikit-build.overrides]]
 if.platform-system = "^darwin"
-inherit.cmake.args = "append"
-cmake.args = ["--preset", "macos-clang-release"]
+cmake.args = ["--preset", "macos-clang-release", "-G", "Ninja"]
+build-dir = "build/macos-clang-release"
+cmake.define.CMAKE_BINARY_DIR = "build/macos-clang-release"
+cmake.define.PACKAGING_FOR_PYTHON = true
+cmake.define.MPI = false
+cmake.define.TESTING=false
 
 [[tool.scikit-build.overrides]]
 if.platform-system = "^win32"
-inherit.cmake.args = "append"
-cmake.args = ["--preset", "windows-msvc-release"]
+cmake.args = ["--preset", "windows-msvc-release", "-G", "Ninja"]
+build-dir = "build/windows-msvc-release"
+cmake.define.CMAKE_BINARY_DIR = "build/windows-msvc-release"
+cmake.define.PACKAGING_FOR_PYTHON = true
+cmake.define.MPI = false
+cmake.define.TESTING=false
 
 [tool.cibuildwheel]
-build = "cp39-*"  # Create wheels compatible with CPython 3.9 and newer (and scikit-build-core will re-tag the Python API as "py3")
+build = "cp39-*"
 skip = "*musllinux*"  # umodl does not support musllinux
+archs = "auto64"  # Do not build 32-bit wheels
+
+# Install build-time dependencies in containers created by cibuildwheel
+# This is compatible with Debian-like and Fedora-like distributions
+[tool.cibuildwheel.linux]
+before-all = [
+    "DEB_NEEDS='zip perl ninja-build'",
+    "FED_NEEDS='zip perl ninja-build'",
+    "apt-get install -y $DEB_NEEDS || dnf install -y $FED_NEEDS"
+]
